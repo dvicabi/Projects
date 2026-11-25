@@ -1,0 +1,3 @@
+10598762a255f36b1790f5e3f3e6ca7e66a34e2d7a7b805ce6a07c9dc2aae060  cabessa-social-0.1.3.apk
+d2f6aa03bc562f105dc5951097378c689de6b109a0dbeae4312beafd335c7de5  cabessa-social-0.1.3-source.zip
+e0fb2035ef4f8660faa68455e63d8a22290002bb0e55a5bfb209f26b18216db2  cabessa-social-0.1.3-build-report.md
