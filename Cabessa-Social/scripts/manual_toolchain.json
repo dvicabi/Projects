@@ -1,0 +1,26 @@
+{
+  "morphe_cli": {
+    "version": "2.3.0",
+    "sha256": "e0e49525e1fbe1108d6cfd7398d39e0cd489c58a753e63653c1e8f11a0099757",
+    "url": "https://github.com/MorpheApp/morphe-desktop/releases/download/v2.3.0/morphe-desktop-2.3.0-all.jar"
+  },
+  "patches_library": {
+    "version": "2.3.0",
+    "sha256": "12f7b00617aa5a50297b2cab98fef0b1cd2f327885efcad6ea3ad9b58b3902d0",
+    "url": "https://github.com/MorpheApp/morphe-patches-library/releases/download/v2.3.0/morphe-patches-library-2.3.0.jar"
+  },
+  "gradle_distribution": {
+    "version": "9.5.0",
+    "sha256": "553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746",
+    "url": "https://services.gradle.org/distributions/gradle-9.5.0-bin.zip"
+  },
+  "kotlin_compiler_libraries": {
+    "annotations-24.0.1.jar": "61666dbce7e42e6c85b43c04fcfb8293a21dcb55b3c80e869270ce42c01a6b35",
+    "kotlin-compiler-embeddable-2.3.20.jar": "976f989d0b5f5d80e8e8a8ad4b73da0bfc27fdd965b9fa38362b2be79ecc1337",
+    "kotlin-daemon-embeddable-2.3.20.jar": "8870bab840b8087c96c4ddc06088b4aedf5131c408af3674306304f1f96af3f4",
+    "kotlin-reflect-2.3.20.jar": "e346fa3c3ff4451f5f707a312887fd4c8555da48cc15fa9db2ba93c33f89f813",
+    "kotlin-script-runtime-2.3.20.jar": "6fcdb7da6e65cf8cc43e5aabab94bdcc48825e7933686f8a1bf694eb88f8e00e",
+    "kotlin-stdlib-2.3.20.jar": "0ae12504a5040ebaf37703908483420d1a5624dd1d93f357665f8c77c848a01e",
+    "kotlinx-coroutines-core-jvm-1.10.2.jar": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+  }
+}

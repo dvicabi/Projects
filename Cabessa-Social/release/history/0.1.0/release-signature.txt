@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): false
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Cabessa Social, OU=Personal Android App, O=Cabessa Social, C=IL
+Signer #1 certificate SHA-256 digest: 8c0c5bde8ad2a9cc174b5385ae1a24734f95b07f4f6d751fcff2a82280066dc2
+Signer #1 certificate SHA-1 digest: d10e05c24146cc10a6b336d91524d4d68e318fbc
+Signer #1 certificate MD5 digest: c6be23c552f6c450b4ab82502405f2f2
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 4096
+Signer #1 public key SHA-256 digest: cbf4cedd4a2b83b75084c0aef676fc866e34f8971a5ea28318b46c9c710ae427
+Signer #1 public key SHA-1 digest: 1761929cb8f0c2aaeeffca2d21b53df537d328cf
+Signer #1 public key MD5 digest: 0483da14fac7033a44b02b4912c4c3d9

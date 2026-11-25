@@ -1,0 +1,46 @@
+# Build outputs
+*.apk
+*.apkm
+*.idsig
+*.mpe
+*.mpp
+
+# Local tooling (Morphe CLI is downloaded locally)
+tools/
+
+# Local signing material
+*.keystore
+*.jks
+*.p12
+*.pfx
+*-password.txt
+dist/
+
+# Gradle / build
+.gradle/
+build/
+**/build/
+.kotlin/
+local.properties
+
+# IDE
+*.iml
+/.idea
+
+# OS
+.DS_Store
+
+# Python test caches
+__pycache__/
+*.py[cod]
+
+# Never commit local credentials or signing backups
+.env
+.env.*
+*signing-backup*
+*.key
+*.pem
+
+!release/cabessa-social-patches-0.1.0.mpp
+
+!release/cabessa-social-patches-0.1.3.mpp

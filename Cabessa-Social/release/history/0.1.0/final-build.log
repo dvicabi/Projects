@@ -1,0 +1,63 @@
+Public compiler and patch tools match the pinned hashes.
+Certificate stored in file </workspace/scratch/c45c6a207f23/work/instagram-social/build/release.ytqprPZa/release-certificate.der>
+Building the patch bundle.
+Compiling 24 Java extension sources.
+Compiling 19 Kotlin patch sources.
+Patch bundle compiled and loaded by the CLI. Logs: /workspace/scratch/c45c6a207f23/work/instagram-social/build/manual/bundle-hrji1aa2
+/workspace/scratch/c45c6a207f23/work/instagram-social/patches/build/libs/cabessa-social-patches-0.1.0.mpp
+Applying the fixed social policy.
+INFO: Morphe data root: /workspace/scratch/c45c6a207f23/toolchain/morphe-data (JAR-adjacent)
+INFO: Initializing patcher...
+DEBUG: Could not check for CLI update: java.net.UnknownHostException: raw.githubusercontent.com
+INFO: Loading patches from 1 bundle(s)...
+INFO: Filtering patches for com.instagram.android v456.0.0.53.78...
+INFO: Skipping disabled: Own signing-key compatibility (default)
+INFO: Applying 15 patches...
+INFO: Deleting existing temporary files directory
+INFO: Decoding the manifest
+INFO: Decoding resources on request, 18457 files can be decoded
+INFO: Executing patches
+INFO: Building instruction indexes for 231756 classes...
+INFO: Applied: Clone
+INFO: Applied: Comments
+INFO: Applied: Content response filtering
+INFO: Applied: Feed item filtering
+INFO: Applied: Force SDR display
+INFO: Applied: Grayscale
+INFO: Applied: Hidden Home in Back history
+INFO: Applied: Limit feed to following profiles
+INFO: Applied: Notes tray
+INFO: Applied: Popup hiding
+INFO: Applied: Preserve post caption
+INFO: Applied: Quoicouview mode
+INFO: Applied: Restart relay
+INFO: Applied: Settings entry point
+INFO: Applied: Suggested accounts in the story tray
+INFO: Rebuilding APK...
+INFO: Compiling patched dex files (mode: STRIP_FAST)
+INFO: Copied 65 unchanged extension classes to 1 DEX files
+INFO: Changed 165 of 231828 classes to mutable
+INFO: Writing 165 new classes to new DEX files
+INFO: Processing 165 classes (single threaded mode)
+INFO: Wrote 1 dex files to /workspace/scratch/c45c6a207f23/toolchain/morphe-data/tmp/patching-1795595340914/patcher/patched/newDex
+INFO: Stripped 158 modified classes from 18 original DEX files
+INFO: Compiling modified resources
+INFO: Stripping libs (keeping architectures arm64-v8a, armeabi-v7a, x86, x86_64)
+INFO: Stripped 0 lib files
+INFO: Decoded 1 of 18457 files on request
+INFO: Unescaping strings
+INFO: Post-processing package name change
+INFO: Processing aapt macros
+INFO: Generating new resource IDs
+INFO: Writing resource APK
+INFO: Encoded 2 of 616 values in 1 files, 0 resource files and 0 configurations of patches for com.instagram.android
+INFO: Reusing 18225 unchanged archive entries, rebuilding 2 entries, dropping 0 entries, leaving out 21 replaced entries
+INFO: Resource APK scan: 100ms write: 600ms
+INFO: Saved to /workspace/scratch/c45c6a207f23/work/instagram-social/build/release.ytqprPZa/unsigned.apk
+INFO: Patching took 14.1 seconds
+INFO: Patching result saved to /workspace/scratch/c45c6a207f23/work/instagram-social/build/release.ytqprPZa/patch-report.json
+Patch report verified: 15 patches.
+Signing with the configured release key.
+APK package, label, release flags, permissions, extension classes and signer verified.
+Verified build: /workspace/scratch/c45c6a207f23/work/instagram-social/dist/cabessa-social.apk
+On-device acceptance and traffic checks remain required before calling this build validated.

@@ -1,0 +1,16 @@
+Final APK Following-hook verification
+
+APK: /workspace/scratch/c45c6a207f23/iteration-013/source/cabessa-social-0.1.2-source/dist/cabessa-social.apk
+SHA-256: 10598762a255f36b1790f5e3f3e6ca7e66a34e2d7a7b805ce6a07c9dc2aae060
+Size: 170851316 bytes
+
+PASS: request constructor LX/03bn.<init> in classes33.dex retains 33 registers.
+PASS: incoming v24 Map moves via move-object/from16 into v0.
+PASS: exactly one setFollowingHeader(Map) call uses invoke-static/range {v0..v0}; result v0 is stored into the correct A0O Map field, receiver v3.
+PASS: native timeline builder LX/03cd.A01 in classes33.dex retains 31 registers. High input registers v26/v29 move into the existing typed locals v5/v3.
+PASS: all 44 native two-String parameter/header setter call sites have preceding followingParameter(key,value) and move-result-object back into the original value register. All added non-range invoke operands fit 4-bit register encoding (v0..v15), with no aliased key/value registers.
+PASS: max_id still comes from LX/03bn.A0J into v1; native AQH builder receives key v0 and unchanged cursor v1 through the key-specific helper. No cursor replacement/truncation introduced.
+PASS: native A0O and later A0P/extra-map iteration remain in the builder, with guarded writes.
+
+Extension method body inspected separately in final-apk-following-extension.txt.
+Scope: static inspection of the actual final signed APK; no claim of live Instagram account/device chronology validation. No source files edited.

@@ -1,0 +1,24 @@
+{
+  "build_route": "public-tools-manual-source-build",
+  "bundle_sha256": "553aef5bb3541bba8ee554ab3daa422977dbfd06435a8f83a7f276b0095051f8",
+  "patcher_version": "2.5.0",
+  "morphe_cli_sha256": "e0e49525e1fbe1108d6cfd7398d39e0cd489c58a753e63653c1e8f11a0099757",
+  "patches_library_sha256": "12f7b00617aa5a50297b2cab98fef0b1cd2f327885efcad6ea3ad9b58b3902d0",
+  "android_api_jar_sha256": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+  "d8_jar_sha256": "305622ad00535684534eb8f742cbf5e628a9abc09d8ea4d39d1babb95bf0cee5",
+  "compiler_jars_sha256": {
+    "annotations-24.0.1.jar": "61666dbce7e42e6c85b43c04fcfb8293a21dcb55b3c80e869270ce42c01a6b35",
+    "kotlin-compiler-embeddable-2.3.20.jar": "976f989d0b5f5d80e8e8a8ad4b73da0bfc27fdd965b9fa38362b2be79ecc1337",
+    "kotlin-daemon-embeddable-2.3.20.jar": "8870bab840b8087c96c4ddc06088b4aedf5131c408af3674306304f1f96af3f4",
+    "kotlin-reflect-2.3.20.jar": "e346fa3c3ff4451f5f707a312887fd4c8555da48cc15fa9db2ba93c33f89f813",
+    "kotlin-script-runtime-2.3.20.jar": "6fcdb7da6e65cf8cc43e5aabab94bdcc48825e7933686f8a1bf694eb88f8e00e",
+    "kotlin-stdlib-2.3.20.jar": "0ae12504a5040ebaf37703908483420d1a5624dd1d93f357665f8c77c848a01e",
+    "kotlinx-coroutines-core-jvm-1.10.2.jar": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+  },
+  "java_sources": 24,
+  "kotlin_sources": 19,
+  "extension_dex_sha256": "837b211576f71cdaab2f4bdf9c018322485610618c7fc4d559ae5faaf58550b6",
+  "jvm_target": 17,
+  "extension_min_api": 28,
+  "local_logs": "build/manual/bundle-hrji1aa2"
+}

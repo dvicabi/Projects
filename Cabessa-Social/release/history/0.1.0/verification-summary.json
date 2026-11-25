@@ -1,0 +1,12 @@
+{
+  "apk_sha256": "9df5828fe684a450c164b927b6137569d6c77f61482678b205a941629f9b4ea0",
+  "launcher_labels_checked": 16,
+  "enabled_launcher_present": true,
+  "unit_tests": {
+    "response_filter_and_policy": 6,
+    "release_gates": 10,
+    "all_passed": true
+  },
+  "device_test": "not_run_no_device_connected",
+  "source_own_signature_compatibility": false
+}

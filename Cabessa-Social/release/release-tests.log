@@ -1,0 +1,15 @@
+test_badging_rejects_wrong_identity_and_unsafe_flags (test_release_checks.ReleaseGateTests.test_badging_rejects_wrong_identity_and_unsafe_flags) ... ok
+test_certificate_digest_requires_full_verified_tool_record (test_release_checks.ReleaseGateTests.test_certificate_digest_requires_full_verified_tool_record) ... ok
+test_complete_report_passes (test_release_checks.ReleaseGateTests.test_complete_report_passes) ... ok
+test_debug_or_updater_patch_rejected (test_release_checks.ReleaseGateTests.test_debug_or_updater_patch_rejected) ... ok
+test_failed_patch_rejects_even_when_required_names_are_present (test_release_checks.ReleaseGateTests.test_failed_patch_rejects_even_when_required_names_are_present) ... ok
+test_failed_step_is_not_hidden_by_top_level_success (test_release_checks.ReleaseGateTests.test_failed_step_is_not_hidden_by_top_level_success) ... ok
+test_incomplete_or_unknown_report_fails (test_release_checks.ReleaseGateTests.test_incomplete_or_unknown_report_fails) ... ok
+test_removed_class_reference_rejected (test_release_checks.ReleaseGateTests.test_removed_class_reference_rejected) ... ok
+test_rotated_official_signers_exclude_source_stamp (test_release_checks.ReleaseGateTests.test_rotated_official_signers_exclude_source_stamp) ... ok
+test_signature_option_must_match_applied_patch (test_release_checks.ReleaseGateTests.test_signature_option_must_match_applied_patch) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.002s
+
+OK

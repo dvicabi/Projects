@@ -1,0 +1,22 @@
+test_later_request_maps_cannot_restore_ranked_feed (test_following_policy.FollowingPolicyTests.test_later_request_maps_cannot_restore_ranked_feed) ... Following: later map overrides denied; immutable input and native cursors preserved.
+ok
+test_shortcut_routes_and_retains_stories (test_following_shortcut.FollowingShortcutTests.test_shortcut_routes_and_retains_stories) ... Shortcut: Hebrew/English, tray recycling, native tab routing, missing or disabled feed: OK
+ok
+test_external_updater_remains_removed (test_release_version.ReleaseVersionTests.test_external_updater_remains_removed) ... ok
+test_chunk_boundaries_and_json_oracle (test_response_filter.ResponseFilterTests.test_chunk_boundaries_and_json_oracle) ... ok
+test_cursor_value_types_and_escaped_keys (test_response_filter.ResponseFilterTests.test_cursor_value_types_and_escaped_keys) ... ok
+test_escaped_keys_and_unchanged_unknown_fields (test_response_filter.ResponseFilterTests.test_escaped_keys_and_unchanged_unknown_fields) ... ok
+test_response_lifecycle (test_response_filter.ResponseFilterTests.test_response_lifecycle) ... HTTP errors, fixed feed, scoped paths, Reels, telemetry, concurrency and cleanup: OK
+ok
+test_streamed_documents (test_response_filter.ResponseFilterTests.test_streamed_documents) ... ok
+test_request_capability_is_scoped_and_expires (test_shared_reel_gate.SharedReelGateTests.test_request_capability_is_scoped_and_expires) ... One selected ID, exact origin/path/module, duplicate parameters, expiry, revocation, bounded pending grants: OK
+ok
+test_selected_request_lifecycle (test_shared_reel_loader.SharedReelLoaderTests.test_selected_request_lifecycle) ... Shared Reel loader: selected-only dispatch, ID mismatch, duplicate response, cancel, stale callbacks, timeout, pause, errors, synchronous completion and shortcode: OK
+ok
+test_selected_media_url_boundary (test_single_reel_source.SingleReelSourceTests.test_selected_media_url_boundary) ... Single Reel source: signed queries retained; non-CDN, credentials, schemes, ports and malformed URLs blocked.
+ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 4.578s
+
+OK

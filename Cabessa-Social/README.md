@@ -1,42 +1,118 @@
-<div align="center">
+<p align="center"><img src="assets/cabessa/banner.svg" alt="Cabessa Social" width="100%"></p>
+<p align="center"><strong>סטורי. הודעות. פוסטים מהנעקבים. סרטון אחד בכל פעם.</strong></p>
+<p align="center">
+  <img alt="Source preview 0.1.5" src="https://img.shields.io/badge/source%20preview-0.1.5-5069AC">
+  <img alt="Android 9+" src="https://img.shields.io/badge/Android-9%2B-3DDC84">
+  <img alt="ARM64" src="https://img.shields.io/badge/ABI-ARM64-5069AC">
+  <img alt="GPLv3" src="https://img.shields.io/badge/patches-GPLv3-blue">
+</p>
+<p align="center"><a href="docs/INSTALL_HE.md">התקנה ועדכון</a> · <a href="docs/BUILD_RESULT_HE.md">תוצאות הבנייה</a> · <a href="docs/BUILD_FROM_SOURCE.md">Build from source</a> · <a href="CHANGELOG.md">שינויים</a></p>
 
-# CABESSA SOCIAL
+## גרסה 0.1.5 — ניהול חשבונות מוסתרים (קוד מקור בלבד)
 
-**More connection. Less distraction.**
+כפתור **ניהול הפיד · הסתרת חשבונות** במסך הבית ובהגדרות פותח רשימת חשבונות
+שהופיעו בפיד לאחרונה, אפשרות להוסיף שם משתמש ידנית ורשימת החרגות שניתן לבטל.
+ההחרגות נשמרות מקומית במכשיר, לפי מזהה חשבון כשהוא זמין. הן אינן מבטלות מעקב
+ואינן חלות על סטורי, הודעות ופרופילים. יש לרענן את הפיד אחרי שינוי; פריטים ישנים
+במטמון עלולים להופיע עד לקבלת תשובה חדשה. הסדר וההמשך של פיד הנעקבים נשמרים.
 
-![Version](https://img.shields.io/badge/version-0.1.3%20beta-5069AC)
-![Android](https://img.shields.io/badge/Android-9%2B-3DDC84)
-![Architecture](https://img.shields.io/badge/ABI-ARM64-5069AC)
-![License](https://img.shields.io/badge/patches-GPLv3-blue)
+22 בדיקות JVM/Python עברו (12 בדיקות מקור ו־10 בדיקות שערי Release, לא בדיקת APK חדש).
+**טרם נבנה APK 0.1.5**. ראו [פרטי המימוש, הפרטיות והמגבלות](docs/FEED_EXCLUSIONS.md).
 
-סטורי · הודעות · פרסומים מהנעקבים · סרטון אחד בכל פעם
+## גרסה 0.1.4 — תצוגה מקדימה של קוד המקור בלבד
 
-</div>
+נוספה בקוד פתיחת Reel ששיתפו בתוך סטורי באמצעות נגן הסרטון הבודד הקיים.
+החיבור ממוקד בנתיב השיתוף הרגיל מסוג CLIPS, ובוחר את מזהה ה־Reel שהפעולה
+המקורית משתמשת בו. יתר פעולות הסטורי נשארות ללא שינוי. אין פתיחת נגן Reels
+מקורי כנתיב חלופי במקרה של כשל.
 
-## Release 0.1.3
+21 בדיקות אוטומטיות עברו. נתיב הסטורי נבדק סטטית מול ה־APK הקיים.
+**עדיין לא נבנה או נחתם APK 0.1.4**; חסרים כלי הבנייה וה־APK הבסיסי.
+גרסה 0.1.3 היא עדיין הגרסה האחרונה שנחתמה. [דוח השינוי והבדיקות](docs/STORY_SHARED_REEL.md).
 
-| Feature | Behavior |
+## גרסה 0.1.3 — הגרסה החתומה האחרונה
+
+עדכון APK נבנה ונחתם ב־25 בנובמבר 2026 עם אותו אישור חתימה של הגרסה
+הקודמת. הוא משלב שתי תוספות שהתבקשו:
+
+| תוספת | התנהגות |
 | --- | --- |
-| Friends' posts | Following feed with chronological continuation |
-| Shared reels | Single-video player; no next reel |
-| Home | Messages and stories together |
-| Privacy | No added external update service or debug bridge |
-| Install | Android 9+, ARM64; package `com.dvircab.social` |
+| פיד פרסומי הנעקבים | כפתור במסך הסטורי וההודעות פותח Following, עם טעינת המשך טבעית וסדר חדש לישן לפי השירות. בחירת המצב נאכפת גם בשלב כתיבת פרמטרי הבקשה הסופיים. |
+| Reel שנשלח בהודעה | נגן מסך מלא בסגנון סטורי לסרטון שנבחר בלבד. השהיה, ניגון חוזר, מעבר בתוך הסרטון וחזרה לשיחה. אין סרטון הבא. |
 
-**Publication status:** this branch is a partial source snapshot, not yet the complete buildable repository. The complete 195-file source archive and signed APK were produced separately and remain in the project conversation. A GitHub Release asset has not been uploaded. No private signing material is included.
+הגרסה כוללת מימוש וקובץ התקנה. ניגון בפועל וסדר התוכן בחשבון אמיתי עדיין
+דורשים בדיקה בטלפון. המשתמש אישר שההתחברות בגרסה הקודמת עובדת; מנגנון
+ההתחברות ומפתח החתימה נשמרו. המקורות הם מקורות השינויים וכלי הבנייה,
+ולא קוד המקור הקנייני של Instagram.
 
-## Verification
+## מה נשאר ומה מוגבל
 
-The previous build report records 16 applied patches and 21 passed automated tests. Real-device playback, feed order, notification behavior and runtime traffic still need verification. See [build report](docs/BUILD_REPORT.md) and [release checksums](release/SHA256SUMS.txt).
+| נשאר באפליקציה | מגבלות קבועות |
+| --- | --- |
+| הודעות פרטיות וקבוצות, צפייה והעלאת סטורי | Notes ו־Explore חסומים |
+| חיפוש אנשים, פרופילים ופוסטים | פיד אלגוריתמי והמלצות חסומים לפי כללי הסינון |
+| העלאת פוסטים, לייקים, תגובות והתראות | אין גלילת Reels או מעבר אוטומטי לסרטון הבא |
+| פיד נעקבים עם טעינת פוסטים ישנים | אין Ghost Mode או פתיחת חסימות לזמן מוגבל |
+| נגן מבודד ל־Reel מהשיחה ומצב שחור ולבן | אין מנגנון עדכון חיצוני או ממשק Debug |
 
-## Selected source
+בנגן החדש יש פעולות ניגון בלבד; כפתורי לייק, תגובה ושיתוף של Reel אינם
+כלולים בו. הפרסומים בפיד הם התוכן הזמין שאינסטגרם מחזירה לחשבון הנעקבים;
+אין הבטחה לארכיון מלא או לשחזור סטוריז שפג תוקפם.
 
-- [Following-only policy](extensions/extension/src/main/java/com/feurstagram/extension/LimitFeed.java)
-- [Request policy](extensions/extension/src/main/java/com/feurstagram/extension/RequestPolicy.java)
-- [One-reel request gate](extensions/extension/src/main/java/com/feurstagram/extension/SharedReelRequestGate.java)
-- [Media source validator](extensions/extension/src/main/java/com/feurstagram/extension/SingleReelSource.java)
+## התקנת גרסה 0.1.3 בלבד
 
-## Attribution
+הורד את `cabessa-social-0.1.3.apk` המצורף לגרסה ופתח בטלפון כעדכון מעל
+Cabessa Social הקיימת. אין צורך להסיר את האפליקציה או לנקות נתונים.
+ה־APK נמסר בנפרד מחבילת המקורות. לא מתועד כאן Release ציבורי שטרם פורסם.
 
-Modification sources are derived from [FeurStagram](https://github.com/jean-voila/FeurStagram) and governed by GPLv3. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Instagram is proprietary, separate software. This project is unofficial and is not affiliated with Meta. Modified clients can cause compatibility or account restrictions.
+| פריט | ערך |
+| --- | --- |
+| גרסת Cabessa Social | `0.1.3` |
+| גרסת בסיס Instagram | `456.0.0.53.78` |
+| חבילת Android | `com.dvircab.social` |
+| התאמה | Android 9+ · ARM64 |
+| גודל APK | 170851316 bytes |
+| ראיות הבנייה | [build-receipt.json](release/build-receipt.json) · [SHA256SUMS.txt](release/SHA256SUMS.txt) |
 
+## תוצאות הבנייה ההיסטורית של 0.1.3
+
+| בדיקה | תוצאה |
+| --- | --- |
+| קומפילציית Java ו־Kotlin | 29 קובצי Java ו־20 קובצי Kotlin עברו |
+| החלת השינויים על APK הבסיס | 16 שינויים הוחלו, ללא כשל |
+| בדיקות אוטומטיות | 21 בדיקות עברו |
+| אישור חתימה, חבילה ויישור APK | עברו; אותה זהות חתימה |
+| שימוש בטלפון בגרסה החדשה | טרם נבדק |
+| בדיקת תעבורת רשת מלאה | טרם בוצעה |
+
+## מבנה המקורות
+
+| תיקייה | תוכן |
+| --- | --- |
+| `extensions/` | Java: מדיניות, מסכים, נגן וטעינת מדיה |
+| `patches/` | Kotlin: חיבור השינויים לקוד APK הבסיס |
+| `scripts/` | בנייה, אימות כלי עבודה ובדיקת תוצאות |
+| `tests/` | בדיקות התנהגות, בקשות ומחזור חיים |
+| `release/` | ראיות הבנייה החתומה של 0.1.3, אישור ציבורי וחבילת השינויים; יומני בדיקות מקור נפרדים ל־0.1.4 ו־0.1.5 |
+| `release/history/` | ראיות הגרסה המקורית לצורכי היסטוריה |
+| `docs/` | התקנה, בנייה, ארכיטקטורה ומגבלות |
+
+## מדיניות ותחזוקה
+
+החסימות מקובעות בקוד. [מדיניות הרשת](docs/NETWORK_POLICY.md) מפרטת את
+החסימה של נתיבי טלמטריה מוכרים ואת ההרשאה המצומצמת לסרטון שנבחר.
+אין טענה לאפס איסוף נתונים. ההתחברות והתעבורה הדרושה לשירות נשארות
+במסלול המקורי של Instagram. עקיפת אמון בחתימה לא הופעלה.
+
+[הנגן המבודד](docs/SINGLE_SHARED_REEL_DESIGN.md) ו[פיד החברים](docs/FRIENDS_POSTS.md)
+מתעדים את נקודות החיבור שאומתו בקוד ואת בדיקות המכשיר שנותרו. שינוי של
+Instagram או של תבנית הודעה/מדיה עשוי לדרוש התאמה. פרטי הבנייה וכלי העבודה
+נעולים ב[הוראות הבנייה](docs/BUILD_FROM_SOURCE.md). מפתחות חתימה וסיסמאות
+אינם כלולים במקורות או בקובץ ההתקנה.
+
+## קרדיט ורישיון
+
+מבוסס על [FeurStagram](https://github.com/jean-voila/FeurStagram).
+מקורות השינויים כפופים ל־[GPLv3](LICENSE), עם [NOTICE](NOTICE) המקורי.
+Instagram היא רכיב נפרד וקנייני. זהו שינוי אישי בלתי רשמי, ללא שיוך ל־Meta.
+מסמכי upstream ועיצוב היסטורי נשמרו לצורכי קרדיט והיסטוריה.

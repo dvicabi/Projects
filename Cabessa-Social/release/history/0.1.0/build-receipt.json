@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-11-25T08:29:20.304128+00:00",
+  "package": "com.dvircab.social",
+  "application_label": "Cabessa Social",
+  "input_file": "instagram-456.0.0.53.78-arm64.xapk",
+  "input_sha256": "9258c4300623d8be1abf55e4f58061e9c622733ced66e162bd036a3a0302ee5c",
+  "input_signer_trust_source": {
+    "package_name": "com.instagram.android",
+    "source": "https://www.instagram.com/.well-known/assetlinks.json",
+    "retrieved_on": "2026-11-25",
+    "sha256_cert_fingerprints": [
+      "5f3e50f435583c9ae626302a71f7340044087a7e2c60adacfc254205a993e305",
+      "3a10c50c18ba937506c2875e9047be74f8fd8b86fae2ff9feaa50a81fcb4c014"
+    ]
+  },
+  "patched_base_sha256": "8c87eec48024d301baa3e8d7a4a7dbef123a5c81f9107bdb18d71b38fe8766a3",
+  "apk_sha256": "9df5828fe684a450c164b927b6137569d6c77f61482678b205a941629f9b4ea0",
+  "signer_certificate_sha256": "8c0c5bde8ad2a9cc174b5385ae1a24734f95b07f4f6d751fcff2a82280066dc2",
+  "own_signing_key_compatibility": false,
+  "morphe_cli_sha256": "e0e49525e1fbe1108d6cfd7398d39e0cd489c58a753e63653c1e8f11a0099757",
+  "patch_bundle_sha256": "553aef5bb3541bba8ee554ab3daa422977dbfd06435a8f83a7f276b0095051f8",
+  "bundle_build": {
+    "build_route": "public-tools-manual-source-build",
+    "bundle_sha256": "553aef5bb3541bba8ee554ab3daa422977dbfd06435a8f83a7f276b0095051f8",
+    "patcher_version": "2.5.0",
+    "morphe_cli_sha256": "e0e49525e1fbe1108d6cfd7398d39e0cd489c58a753e63653c1e8f11a0099757",
+    "patches_library_sha256": "12f7b00617aa5a50297b2cab98fef0b1cd2f327885efcad6ea3ad9b58b3902d0",
+    "android_api_jar_sha256": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+    "d8_jar_sha256": "305622ad00535684534eb8f742cbf5e628a9abc09d8ea4d39d1babb95bf0cee5",
+    "compiler_jars_sha256": {
+      "annotations-24.0.1.jar": "61666dbce7e42e6c85b43c04fcfb8293a21dcb55b3c80e869270ce42c01a6b35",
+      "kotlin-compiler-embeddable-2.3.20.jar": "976f989d0b5f5d80e8e8a8ad4b73da0bfc27fdd965b9fa38362b2be79ecc1337",
+      "kotlin-daemon-embeddable-2.3.20.jar": "8870bab840b8087c96c4ddc06088b4aedf5131c408af3674306304f1f96af3f4",
+      "kotlin-reflect-2.3.20.jar": "e346fa3c3ff4451f5f707a312887fd4c8555da48cc15fa9db2ba93c33f89f813",
+      "kotlin-script-runtime-2.3.20.jar": "6fcdb7da6e65cf8cc43e5aabab94bdcc48825e7933686f8a1bf694eb88f8e00e",
+      "kotlin-stdlib-2.3.20.jar": "0ae12504a5040ebaf37703908483420d1a5624dd1d93f357665f8c77c848a01e",
+      "kotlinx-coroutines-core-jvm-1.10.2.jar": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+    },
+    "java_sources": 24,
+    "kotlin_sources": 19,
+    "extension_dex_sha256": "837b211576f71cdaab2f4bdf9c018322485610618c7fc4d559ae5faaf58550b6",
+    "jvm_target": 17,
+    "extension_min_api": 28,
+    "local_logs": "build/manual/bundle-hrji1aa2"
+  },
+  "patch_report_sha256": "7d459cadc85b20165362bfdaec2297f6f56abe7b354ecf440b16e7a1f9046218",
+  "applied_patches": [
+    "Clone",
+    "Comments",
+    "Content response filtering",
+    "Feed item filtering",
+    "Force SDR display",
+    "Grayscale",
+    "Hidden Home in Back history",
+    "Limit feed to following profiles",
+    "Notes tray",
+    "Popup hiding",
+    "Preserve post caption",
+    "Quoicouview mode",
+    "Restart relay",
+    "Settings entry point",
+    "Suggested accounts in the story tray"
+  ],
+  "source_files_sha256": {
+    "build.sh": "6b3a21f97702ac06a0ed49b5d4db7ef4557d9f2924f299fc3d93125dde5ebcf3",
+    "extensions/extension/build.gradle.kts": "3de3f09245aad52f717395e6745b1307289c43e768e828a9914b0851ad18b753",
+    "extensions/extension/src/main/AndroidManifest.xml": "5cd294a1b20c3f5f5cb8fd12ef19b535879a64a89a76560970041db03855b057",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Activities.java": "4b2f5beda1918117758f8814b520197b431dc16b2de89b20d94077d84e318772",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Block.java": "ff8d6d3de395e8ebd6e7ae36df9bff61bccaee56e91dd80bc1e7cd46a0b5464e",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Comments.java": "08b29cd2a39870e898c75f29ecbd9a591b1677d7ed8f2ad1651d0d99be3fe930",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Config.java": "f293289493813b6ece423b05d889b08f31a08b26b12c91225213fe71d0040277",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Display.java": "6f8d99726216cc62afa1fafe57428c2b6b592923898a3f3ebdcf2e7656ab14e9",
+    "extensions/extension/src/main/java/com/feurstagram/extension/ExpressiveSwitch.java": "2a04be07a9035aa2d917807a18b2c8f825511c2ea16eb8eb4009bf56a26a29ae",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Grayscale.java": "89b5eba6367d442df965450de99e1e4d78e9ee180b9e7c01f4f2cee367692699",
+    "extensions/extension/src/main/java/com/feurstagram/extension/HiddenTabSwipeSkipper.java": "e6d325d7b6e1a85e0af84bb0a45ecbd5508882e489a65a0cccca4aeb42731eca",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Hiders.java": "0fb54385da1c373fe3355e0e187a76d07f0dc834753342ebbe0476b2128551d6",
+    "extensions/extension/src/main/java/com/feurstagram/extension/HomeTabWatcher.java": "7d93a1f0b7710b4cdc8f54f110e2a784523eb88b135823385c88d6e6af8891cb",
+    "extensions/extension/src/main/java/com/feurstagram/extension/JsonContentFilter.java": "1a01230243937cbcbce2b0fede2ebbd3e3fdf5ac035359bde2592a5ec36f3baf",
+    "extensions/extension/src/main/java/com/feurstagram/extension/LicenseText.java": "f080ee66ec6ec82a9b9fb2a1018666648f0ba6f41d9fb84bbbee84cda1f2c1a6",
+    "extensions/extension/src/main/java/com/feurstagram/extension/LimitFeed.java": "44539ca6d6ee0b499dbc4ac52c01688cdd77e9bf59ac5930f494b14a633b8a7c",
+    "extensions/extension/src/main/java/com/feurstagram/extension/ProfileSettingsButton.java": "9cf1e7bc5c5aad44333e3eeef9980ceed7fae91eb8dcea95fa62b57a575a7c2c",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Quoicouview.java": "a778372a0bd596d74880b78f290bd7cc94b2eade4870165ca9bc9d6b7e9c995f",
+    "extensions/extension/src/main/java/com/feurstagram/extension/ReleaseVersion.java": "40b70ad2c7018468024dc75d5fde69668563ed1a3af6c7c3bebef9eb42f6003d",
+    "extensions/extension/src/main/java/com/feurstagram/extension/RequestPolicy.java": "6d45458cf4f68d18e42d5801b83c9db60ab98bb1b8ff22ad0f42c967a42bca94",
+    "extensions/extension/src/main/java/com/feurstagram/extension/ResponseFilter.java": "f2980c0fe10c1aa4bb6e4b758058bed9df446ee09d33ff0c69f2df6dedb1a470",
+    "extensions/extension/src/main/java/com/feurstagram/extension/RestartActivity.java": "5ef8456791e2f0df443ac17992c1756c1aeaf09e24d1d05fc505cad9faa1b497",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Settings.java": "9cb567b26f702ce7d01e29fcf8464ddac2e79c46621ac9abf7b6f5960fc50441",
+    "extensions/extension/src/main/java/com/feurstagram/extension/SignatureTrust.java": "295d18de4f95439e7ca20a1dfecb05a6ef2614a19981729c29521fa70b8f50ba",
+    "extensions/extension/src/main/java/com/feurstagram/extension/StoriesTrayRow.java": "756ebe1d4d0fcd0200bdca4a52466e80fec021009bfcd5711ce8939e31dc85c9",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Toasts.java": "643c027aef7cd6b993fb8706ca08e1d766003be935f5973d5a5bc9aa0919d854",
+    "extensions/extension/src/main/java/com/feurstagram/extension/Windows.java": "5f825e8caa0b82c7c2d8d794c9aa95a9e6d26954b0dc3784d364f04d5fde20f5",
+    "gradle/libs.versions.toml": "3548ca67a4ba76a54d6fadc63627e7adeeae5af138426f944922cf2d7359af5b",
+    "gradle/wrapper/gradle-wrapper.jar": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+    "gradle/wrapper/gradle-wrapper.properties": "2cb0f9ddf992a26fc4947c91019136bff5e1ccfbf93bd905402b1abf69d15bc5",
+    "patches/build.gradle.kts": "4b27a313beae315639f55db5c905439048fed083f58729f9ba79b3dd624158f7",
+    "patches/src/main/kotlin/com/feurstagram/patches/clone/ClonePatch.kt": "617c02de168b2000e73d73b663045fb9d193dc09fffafdceed3655588da98e34",
+    "patches/src/main/kotlin/com/feurstagram/patches/creation/CaptionDraftPatch.kt": "4ccbd6ac29f3a45ad278ca2b8f5320623295e28723f64a5151113e73d9b6d398",
+    "patches/src/main/kotlin/com/feurstagram/patches/display/GrayscalePatch.kt": "760950df22b2060872833b98ca5bc52f8b5283a02fb3873f41e098c06e05138d",
+    "patches/src/main/kotlin/com/feurstagram/patches/display/SetColorModePatch.kt": "aa9a7cc46d2be20cba85aac63026d2f3b96ff8fb837058031cfb4b6bee765e94",
+    "patches/src/main/kotlin/com/feurstagram/patches/network/FeedItemFilterPatch.kt": "35934777fd242e68a108c59665e7e10e564edff735cd2c87f89fc623bd8dcf36",
+    "patches/src/main/kotlin/com/feurstagram/patches/network/LimitFeedToFollowingPatch.kt": "e725b82f6060c85966499ee5c2ec6ff2eaa4456f12e1cab49f18fff4430bdd2d",
+    "patches/src/main/kotlin/com/feurstagram/patches/network/NetworkBlockPatch.kt": "3c834e4f8fb1f772553c593cf74062bab24761db426ad1699698868a6e614341",
+    "patches/src/main/kotlin/com/feurstagram/patches/network/SuggestedTrayEntriesPatch.kt": "67ca520db173317d18f2d667bcdaf76225e6e932ad55913be2bfb2a2a0ac1ef4",
+    "patches/src/main/kotlin/com/feurstagram/patches/quoicouview/QuoicouviewPatch.kt": "032930b82cd751a655799c0865a69b9fcf936664d503ba05f0f3a388bf5b2fca",
+    "patches/src/main/kotlin/com/feurstagram/patches/restart/RestartRelayPatch.kt": "cf30f077f514968742d49917f9d1780b7a2549213adc04c59f54f580a31c6c7c",
+    "patches/src/main/kotlin/com/feurstagram/patches/settings/BackHistoryPatch.kt": "69e448c8f0c597e45365c9b54202971e722da7dac1641cc35c2b1155a576f8ba",
+    "patches/src/main/kotlin/com/feurstagram/patches/settings/SettingsEntryPointPatch.kt": "8cdc7e437da9a3c29ac3bd9583ee5275af67d6d447b2ce7c4376523b52f19534",
+    "patches/src/main/kotlin/com/feurstagram/patches/shared/Constants.kt": "e60ec463d5c28ee164bb62cfc28a506af887fba1506d2b87c01bfd219203877d",
+    "patches/src/main/kotlin/com/feurstagram/patches/shared/InstructionReference.kt": "a4e04730a585386b0a429761c3beb2447b7d28871d664241aed0234f6b57180c",
+    "patches/src/main/kotlin/com/feurstagram/patches/shared/ReelModel.kt": "9de2936432eb2b1504f6d8b9165f8cfd45e65720cb39b433842351ff271b7643",
+    "patches/src/main/kotlin/com/feurstagram/patches/signature/SignatureCheckBypassPatch.kt": "a46e1895b6640ae18720f990f50340bc6687b3ad993c3d1d9ba91e3445defae0",
+    "patches/src/main/kotlin/com/feurstagram/patches/ui/CommentsPatch.kt": "5677fb88ba479c536dae855a4451e235099b387ee9cf62edd014751b355e1b2a",
+    "patches/src/main/kotlin/com/feurstagram/patches/ui/NotesTrayPatch.kt": "5f4971c6ea06b934678d404bf4ea0373e95df7262f3c77fd433f2d8e6365eb97",
+    "patches/src/main/kotlin/com/feurstagram/patches/ui/PopupHidingPatch.kt": "d209d3ccaa07def93d01b839f16edd245b261c26db2e94b38eb3363107651281",
+    "scripts/build_bundle.py": "031d9f36dc59de759589eb994ca0187c66ec176359327aa54c7f90424578ae13",
+    "scripts/manual_toolchain.json": "7fc33f1b24072c1fb3b20187689977ecd82d422cea9fc40bb931ca8136c3fb11",
+    "scripts/release_checks.py": "5e5e31321fff23f0fb694b3249436788473bb44cf9bab443688e924448386eaf",
+    "scripts/test_release_checks.py": "a460de49a1f65f172c5d75364fce00a5a1ddd7621b98631127a83d98d3e72caf",
+    "scripts/trusted_instagram_signers.json": "cab06f535318a8b86a4b3c21096fa094e7859f7d47a8c1d94898b54d9f7aec16",
+    "settings.gradle.kts": "83486043bea5ff504c7c96386864c9d2d7c3b3547aec8155ca3d11f2c4281eed"
+  },
+  "validation": {
+    "apk_signature": "passed",
+    "expected_signer": "passed",
+    "package_label_permissions_debug_status": "passed",
+    "removed_extension_classes": "passed",
+    "required_patches": "passed",
+    "on_device_acceptance": "not_run_by_build_script",
+    "traffic_privacy_validation": "not_run_by_build_script"
+  },
+  "apkeditor_sha256": "a9cd40df818845456be6d696de6110c89edf4b0a0580cb83438ed6b25a366e67",
+  "input_apk_signatures": {
+    "verified_apks": [
+      {
+        "archive_entry": "com.instagram.android.apk",
+        "sha256": "193473c91721cde23b6e56ea3937e54d61d07dc68f5a6d697d0dc3ba91d89940",
+        "signer_sha256": [
+          "3a10c50c18ba937506c2875e9047be74f8fd8b86fae2ff9feaa50a81fcb4c014",
+          "5f3e50f435583c9ae626302a71f7340044087a7e2c60adacfc254205a993e305"
+        ]
+      },
+      {
+        "archive_entry": "config.mdpi.apk",
+        "sha256": "71085d860a17397f2af7836a1bfcfd925522c720a77f80c2cf16131979b0165f",
+        "signer_sha256": [
+          "3a10c50c18ba937506c2875e9047be74f8fd8b86fae2ff9feaa50a81fcb4c014",
+          "5f3e50f435583c9ae626302a71f7340044087a7e2c60adacfc254205a993e305"
+        ]
+      }
+    ]
+  }
+}

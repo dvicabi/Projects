@@ -1,0 +1,9 @@
+{
+  "package_name": "com.instagram.android",
+  "source": "https://www.instagram.com/.well-known/assetlinks.json",
+  "retrieved_on": "2026-11-25",
+  "sha256_cert_fingerprints": [
+    "5f3e50f435583c9ae626302a71f7340044087a7e2c60adacfc254205a993e305",
+    "3a10c50c18ba937506c2875e9047be74f8fd8b86fae2ff9feaa50a81fcb4c014"
+  ]
+}

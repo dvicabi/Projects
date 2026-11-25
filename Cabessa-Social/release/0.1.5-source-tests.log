@@ -1,0 +1,38 @@
+test_persistent_rules_and_timeline_chunks (test_feed_mutes.FeedMuteTests.test_persistent_rules_and_timeline_chunks) ... ok
+test_later_request_maps_cannot_restore_ranked_feed (test_following_policy.FollowingPolicyTests.test_later_request_maps_cannot_restore_ranked_feed) ... Following: later map overrides denied; immutable input and native cursors preserved.
+ok
+test_shortcut_routes_and_retains_stories (test_following_shortcut.FollowingShortcutTests.test_shortcut_routes_and_retains_stories) ... Shortcut: Hebrew/English, tray recycling, native tab routing, missing or disabled feed: OK
+ok
+test_external_updater_remains_removed (test_release_version.ReleaseVersionTests.test_external_updater_remains_removed) ... ok
+test_chunk_boundaries_and_json_oracle (test_response_filter.ResponseFilterTests.test_chunk_boundaries_and_json_oracle) ... ok
+test_cursor_value_types_and_escaped_keys (test_response_filter.ResponseFilterTests.test_cursor_value_types_and_escaped_keys) ... ok
+test_escaped_keys_and_unchanged_unknown_fields (test_response_filter.ResponseFilterTests.test_escaped_keys_and_unchanged_unknown_fields) ... ok
+test_response_lifecycle (test_response_filter.ResponseFilterTests.test_response_lifecycle) ... HTTP errors, fixed feed, scoped paths, Reels, telemetry, concurrency and cleanup: OK
+ok
+test_streamed_documents (test_response_filter.ResponseFilterTests.test_streamed_documents) ... ok
+test_request_capability_is_scoped_and_expires (test_shared_reel_gate.SharedReelGateTests.test_request_capability_is_scoped_and_expires) ... One selected ID, exact origin/path/module, duplicate parameters, expiry, revocation, bounded pending grants: OK
+ok
+test_selected_request_lifecycle (test_shared_reel_loader.SharedReelLoaderTests.test_selected_request_lifecycle) ... Shared Reel loader: selected-only dispatch, ID mismatch, duplicate response, cancel, stale callbacks, timeout, pause, errors, synchronous completion and shortcode: OK
+ok
+test_selected_media_url_boundary (test_single_reel_source.SingleReelSourceTests.test_selected_media_url_boundary) ... Single Reel source: signed queries retained; non-CDN, credentials, schemes, ports and malformed URLs blocked.
+ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 5.456s
+
+OK
+test_badging_rejects_wrong_identity_and_unsafe_flags (test_release_checks.ReleaseGateTests.test_badging_rejects_wrong_identity_and_unsafe_flags) ... ok
+test_certificate_digest_requires_full_verified_tool_record (test_release_checks.ReleaseGateTests.test_certificate_digest_requires_full_verified_tool_record) ... ok
+test_complete_report_passes (test_release_checks.ReleaseGateTests.test_complete_report_passes) ... ok
+test_debug_or_updater_patch_rejected (test_release_checks.ReleaseGateTests.test_debug_or_updater_patch_rejected) ... ok
+test_failed_patch_rejects_even_when_required_names_are_present (test_release_checks.ReleaseGateTests.test_failed_patch_rejects_even_when_required_names_are_present) ... ok
+test_failed_step_is_not_hidden_by_top_level_success (test_release_checks.ReleaseGateTests.test_failed_step_is_not_hidden_by_top_level_success) ... ok
+test_incomplete_or_unknown_report_fails (test_release_checks.ReleaseGateTests.test_incomplete_or_unknown_report_fails) ... ok
+test_removed_class_reference_rejected (test_release_checks.ReleaseGateTests.test_removed_class_reference_rejected) ... ok
+test_rotated_official_signers_exclude_source_stamp (test_release_checks.ReleaseGateTests.test_rotated_official_signers_exclude_source_stamp) ... ok
+test_signature_option_must_match_applied_patch (test_release_checks.ReleaseGateTests.test_signature_option_must_match_applied_patch) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.004s
+
+OK
