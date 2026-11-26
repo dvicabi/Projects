@@ -1,0 +1,117 @@
+name: Cabessa Social 0.1.5 isolated build
+on:
+  push:
+    branches: [cabessa-social-build-v0.1.5]
+    paths: ['.github/workflows/cabessa-social-build-0.1.5.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cabessa-social-build-v0.1.5
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+        working-directory: Cabessa-Social
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Select JDK 21 and rerun source gates
+        run: |
+          set -euo pipefail
+          test -n "${JAVA_HOME_21_X64:-}"
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_21_X64/bin" >> "$GITHUB_PATH"
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m unittest discover -s scripts -p 'test_release_checks.py' -v
+      - name: Install Android SDK and verified compiler dependencies
+        run: |
+          set -euo pipefail
+          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+          mkdir -p tools
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          lock = json.loads(pathlib.Path("scripts/manual_toolchain.json").read_text())
+          files = {"morphe_cli":"morphe-desktop-2.3.0-all.jar", "patches_library":"morphe-patches-library-2.3.0.jar", "gradle_distribution":"gradle-9.5.0-bin.zip"}
+          for key, name in files.items():
+              dest = pathlib.Path("tools") / name
+              subprocess.run(["curl", "--fail", "--location", "--retry", "2", "--connect-timeout", "20", "--max-time", "480", "--output", str(dest), lock[key]["url"]], check=True)
+              with dest.open("rb") as stream:
+                  actual = hashlib.file_digest(stream, "sha256").hexdigest()
+              if actual != lock[key]["sha256"]:
+                  raise SystemExit(f"Checksum mismatch: {name}")
+          PY
+          unzip -q tools/gradle-9.5.0-bin.zip -d tools
+          python3 scripts/build_bundle.py --check
+          python3 scripts/build_bundle.py
+      - name: Obtain exact previously verified Instagram input and APKEditor
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cabessa-input"
+          export EDITOR_HASH=a9cd40df818845456be6d696de6110c89edf4b0a0580cb83438ed6b25a366e67
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, urllib.request
+          target = pathlib.Path(os.environ["RUNNER_TEMP"]) / "cabessa-input" / "APKEditor-reviewed.jar"
+          req = urllib.request.Request("https://api.github.com/repos/REAndroid/APKEditor/releases?per_page=30", headers={"Accept":"application/vnd.github+json","User-Agent":"Cabessa-Social-Build"})
+          with urllib.request.urlopen(req, timeout=30) as response:
+              releases = json.load(response)
+          expected = os.environ["EDITOR_HASH"]
+          candidates = []
+          for release in releases:
+              for asset in release.get("assets", []):
+                  if asset["name"].lower().endswith(".jar") and "apkeditor" in asset["name"].lower():
+                      digest = asset.get("digest")
+                      if digest == "sha256:" + expected:
+                          candidates.insert(0, asset)
+                      elif not digest:
+                          candidates.append(asset)
+          for asset in candidates[:12]:
+              if not asset["browser_download_url"].startswith("https://github.com/REAndroid/APKEditor/releases/download/"):
+                  continue
+              subprocess.run(["curl","--fail","--location","--retry","1","--max-time","120","--output",str(target),asset["browser_download_url"]],check=True)
+              with target.open("rb") as stream:
+                  if hashlib.file_digest(stream,"sha256").hexdigest() == expected:
+                      break
+              target.unlink()
+          else:
+              raise SystemExit("No APKEditor release matched the previously verified SHA-256")
+          PY
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 480 --output "$RUNNER_TEMP/cabessa-input/instagram-456.0.0.53.78-arm64.xapk" 'https://d.apkpure.net/b/XAPK/com.instagram.android?versionCode=386214574'
+          echo "9258c4300623d8be1abf55e4f58061e9c622733ced66e162bd036a3a0302ee5c  $RUNNER_TEMP/cabessa-input/instagram-456.0.0.53.78-arm64.xapk" | sha256sum -c -
+      - name: Build with disposable CI key (never the private release key)
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          export CABESSA_KEYSTORE="$RUNNER_TEMP/cabessa-ci-only.p12"
+          export CABESSA_KEY_ALIAS=ci-temporary
+          export CABESSA_KEYSTORE_PASS="$(openssl rand -hex 24)"
+          export CABESSA_KEY_PASS="$CABESSA_KEYSTORE_PASS"
+          export APKEDITOR_JAR="$RUNNER_TEMP/cabessa-input/APKEditor-reviewed.jar"
+          export CABESSA_EXPECTED_BASE_SHA256=9258c4300623d8be1abf55e4f58061e9c622733ced66e162bd036a3a0302ee5c
+          keytool -genkeypair -keyalg RSA -keysize 2048 -validity 2 -storetype PKCS12 -alias "$CABESSA_KEY_ALIAS" -keystore "$CABESSA_KEYSTORE" -storepass:env CABESSA_KEYSTORE_PASS -dname 'CN=Disposable CI key, O=Cabessa Social'
+          bash build.sh "$RUNNER_TEMP/cabessa-input/instagram-456.0.0.53.78-arm64.xapk"
+          rm -f "$CABESSA_KEYSTORE"
+      - name: Encrypt intermediate for release-key owner only
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cabessa-handoff"
+          echo '8c0c5bde8ad2a9cc174b5385ae1a24734f95b07f4f6d751fcff2a82280066dc2  release/release-certificate.der' | sha256sum -c -
+          openssl x509 -inform DER -in release/release-certificate.der -out "$RUNNER_TEMP/cabessa-recipient.pem"
+          openssl cms -encrypt -binary -aes-256-gcm -in dist/cabessa-social.apk -outform DER -out "$RUNNER_TEMP/cabessa-handoff/ci-intermediate.apk.cms" "$RUNNER_TEMP/cabessa-recipient.pem"
+          cp dist/{build-receipt.json,patch-report.json,release-signature.txt,SHA256SUMS.txt} "$RUNNER_TEMP/cabessa-handoff/"
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" "$RUNNER_TEMP/cabessa-handoff/"
+          cp "$ANDROID_HOME/build-tools/35.0.0/zipalign" "$ANDROID_HOME/build-tools/35.0.0/aapt2" "$RUNNER_TEMP/cabessa-handoff/"
+          if test -d "$ANDROID_HOME/build-tools/35.0.0/lib64"; then cp -r "$ANDROID_HOME/build-tools/35.0.0/lib64" "$RUNNER_TEMP/cabessa-handoff/"; fi
+          printf '%s\n' 'Encrypted CI intermediate only. NOT a user-installable release. Decrypt, re-sign locally with the original release key, and verify before delivery.' > "$RUNNER_TEMP/cabessa-handoff/README.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cabessa-social-0.1.5-encrypted-ci-intermediate
+          path: ${{ runner.temp }}/cabessa-handoff/
+          if-no-files-found: error
+          retention-days: 1
