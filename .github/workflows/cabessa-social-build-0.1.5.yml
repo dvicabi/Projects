@@ -69,38 +69,21 @@ jobs:
           unzip -q tools/gradle-9.5.0-bin.zip -d tools
           python3 scripts/build_bundle.py --check
           python3 scripts/build_bundle.py
+      - name: Preserve verified compiled patch bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cabessa-social-0.1.5-compiled-patches
+          path: |
+            Cabessa-Social/patches/build/libs/cabessa-social-patches-0.1.5.mpp
+            Cabessa-Social/patches/build/libs/bundle-build-receipt.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Obtain exact previously verified Instagram input and APKEditor
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/cabessa-input"
-          export EDITOR_HASH=a9cd40df818845456be6d696de6110c89edf4b0a0580cb83438ed6b25a366e67
-          python3 - <<'PY'
-          import hashlib, json, os, pathlib, subprocess, urllib.request
-          target = pathlib.Path(os.environ["RUNNER_TEMP"]) / "cabessa-input" / "APKEditor-reviewed.jar"
-          req = urllib.request.Request("https://api.github.com/repos/REAndroid/APKEditor/releases?per_page=30", headers={"Accept":"application/vnd.github+json","User-Agent":"Cabessa-Social-Build"})
-          with urllib.request.urlopen(req, timeout=30) as response:
-              releases = json.load(response)
-          expected = os.environ["EDITOR_HASH"]
-          candidates = []
-          for release in releases:
-              for asset in release.get("assets", []):
-                  if asset["name"].lower().endswith(".jar") and "apkeditor" in asset["name"].lower():
-                      digest = asset.get("digest")
-                      if digest == "sha256:" + expected:
-                          candidates.insert(0, asset)
-                      elif not digest:
-                          candidates.append(asset)
-          for asset in candidates[:12]:
-              if not asset["browser_download_url"].startswith("https://github.com/REAndroid/APKEditor/releases/download/"):
-                  continue
-              subprocess.run(["curl","--fail","--location","--retry","1","--max-time","120","--output",str(target),asset["browser_download_url"]],check=True)
-              with target.open("rb") as stream:
-                  if hashlib.file_digest(stream,"sha256").hexdigest() == expected:
-                      break
-              target.unlink()
-          else:
-              raise SystemExit("No APKEditor release matched the previously verified SHA-256")
-          PY
+          curl --fail --location --retry 2 --connect-timeout 20 --max-time 120 --output "$RUNNER_TEMP/cabessa-input/APKEditor-reviewed.jar" 'https://github.com/REAndroid/APKEditor/releases/download/V1.4.9/APKEditor-1.4.9.jar'
+          echo "a9cd40df818845456be6d696de6110c89edf4b0a0580cb83438ed6b25a366e67  $RUNNER_TEMP/cabessa-input/APKEditor-reviewed.jar" | sha256sum -c -
           curl --fail --location --retry 2 --connect-timeout 20 --max-time 480 --output "$RUNNER_TEMP/cabessa-input/instagram-456.0.0.53.78-arm64.xapk" 'https://d.apkpure.net/b/XAPK/com.instagram.android?versionCode=386214574'
           echo "9258c4300623d8be1abf55e4f58061e9c622733ced66e162bd036a3a0302ee5c  $RUNNER_TEMP/cabessa-input/instagram-456.0.0.53.78-arm64.xapk" | sha256sum -c -
       - name: Build with disposable CI key (never the private release key)
