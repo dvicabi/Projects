@@ -8,7 +8,7 @@ permissions:
   contents: read
 concurrency:
   group: cabessa-social-v0.1.6
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -78,21 +78,23 @@ jobs:
             Cabessa-Social/patches/build/libs/bundle-build-receipt.json
           if-no-files-found: error
           retention-days: 7
-      - name: Install emulator test dependencies
+      - name: Install pinned Android runtime
+        timeout-minutes: 10
         run: |
           set -euo pipefail
-          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          "$sdkmanager" --install 'platform-tools' 'emulator' 'system-images;android-35;google_apis;x86_64'
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+          python3 validation/android-smoke/prepare_runtime.py "$RUNNER_TEMP/cabessa-runtime" "$ANDROID_HOME"
+          echo "ANDROID_HOME=$RUNNER_TEMP/cabessa-runtime/sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$RUNNER_TEMP/cabessa-runtime/sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$RUNNER_TEMP/cabessa-runtime/avd" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/cabessa-runtime/sdk/platform-tools" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/cabessa-runtime/sdk/emulator" >> "$GITHUB_PATH"
           if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq; sudo apt-get install -y ffmpeg; fi
           sudo chmod 666 /dev/kvm
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name cabessa-validation --package 'system-images;android-35;google_apis;x86_64' --device pixel_2
       - name: Run Android lifecycle and layout smoke checks
         timeout-minutes: 12
         run: |
           set -euo pipefail
-          "$ANDROID_HOME/emulator/emulator" -avd cabessa-validation -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd CabessaApi35 -no-window -no-audio -no-boot-anim -gpu swiftshader -no-snapshot -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
           emulator_pid=$!
           trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
           adb wait-for-device

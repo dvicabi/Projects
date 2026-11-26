@@ -30,7 +30,7 @@ def main():
         (OUT / part).mkdir(parents=True)
     run("ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
         "color=c=0x32425a:s=360x640:r=24", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=44100",
-        "-t", "12", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "64k",
+        "-t", "60", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "64k",
         "-movflags", "+faststart", OUT / "assets/fixture.mp4")
     run(TOOLS / "aapt2", "compile", "--dir", HERE / "res", "-o", OUT / "resources.zip")
     run(TOOLS / "aapt2", "link", "-o", OUT / "resources.apk", "-I", ANDROID,

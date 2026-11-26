@@ -13,6 +13,14 @@ platform-tools and an already booted Android emulator. Set `ANDROID_HOME`, then:
 bash validation/android-smoke/run.sh
 ```
 
+For a slow software-only emulator, use `CABESSA_SMOKE_TIMEOUT_SCALE=4` with the
+same command, or pass instrumentation argument `-e timeoutScale 4` directly.
+The permitted scale is 1–8. It lengthens test assertion/Activity-monitor deadlines
+and the delayed fixture response; production handoff, lookup and media timeouts
+and every behavioral assertion remain unchanged. The synthetic video is 60 seconds
+so software rendering time cannot accidentally finish it during control checks.
+The result records the scale and fixture duration explicitly.
+
 The test APK targets API 37, like the inspected Instagram base. The platform 35
 compile library suffices because the extension uses no newer APIs. The runner
 temporarily changes emulator display size and density for the narrow render and
@@ -39,8 +47,11 @@ resets both settings on exit. Run only against a disposable emulator.
 
 The test also renders actual production inbox buttons, profile shortcut, settings
 and hidden-account pages in Hebrew and English, light and dark themes. A second pass uses a genuine
-320dp display width with 130% font scale. Inbox button targets and ellipsis are
-checked programmatically; screenshots require visual review.
+320dp display width with 130% font scale. The harness application sets
+`supportsRtl=true`, matching the release. Actual view direction is asserted for
+the Hebrew/English shell, inbox controls, profile control and settings page.
+Button/switch accessibility targets and inbox ellipsis are checked
+programmatically; screenshots still require visual review.
 
 ## Scope and test double
 

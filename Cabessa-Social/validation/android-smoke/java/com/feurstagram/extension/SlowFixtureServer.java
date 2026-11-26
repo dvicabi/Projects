@@ -13,11 +13,13 @@ import java.nio.charset.StandardCharsets;
 final class SlowFixtureServer implements Closeable {
     private final ServerSocket server;
     private final byte[] fixture;
+    private final long delayMillis;
     private volatile boolean closed;
     volatile boolean requested;
 
-    SlowFixtureServer(byte[] bytes) throws Exception {
+    SlowFixtureServer(byte[] bytes, long delayMillis) throws Exception {
         fixture = bytes;
+        this.delayMillis = delayMillis;
         server = new ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"));
         Thread accept = new Thread(() -> {
             while (!closed) {
@@ -51,7 +53,7 @@ final class SlowFixtureServer implements Closeable {
                 }
             }
             requested = true;
-            Thread.sleep(2000L);
+            Thread.sleep(delayMillis);
             if (closed) return;
             offset = Math.min(Math.max(0, offset), fixture.length - 1);
             String headers = "HTTP/1.1 " + (range ? "206 Partial Content" : "200 OK") + "\r\n"

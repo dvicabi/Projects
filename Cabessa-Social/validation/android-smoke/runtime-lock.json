@@ -1,0 +1,11 @@
+{
+  "metadata_sources": [
+    "https://dl.google.com/android/repository/repository2-3.xml",
+    "https://dl.google.com/android/repository/sys-img/google_apis/sys-img2-3.xml"
+  ],
+  "archives": [
+    {"name":"platform-tools_r37.0.3-linux.zip","url":"https://dl.google.com/android/repository/platform-tools_r37.0.3-linux.zip","sha256":"214548146cadb2ca3508143d8a1d4be4c59de5bb837253e3ede89ed74cf450d1","official_sha1":"e1579b288a7ae4e9bc28dedec6a154d78b3c04ed","directory":"sdk"},
+    {"name":"emulator-linux_x64-16970787.zip","url":"https://dl.google.com/android/repository/emulator-linux_x64-16970787.zip","sha256":"a4405349d8a9c52136ab7861e5331dc40e85574bd91cb8889a298a2ff4c52e26","official_sha1":"5f7314368fc6c05c937f6991bb4106214dc389e7","directory":"sdk"},
+    {"name":"x86_64-35_r09.zip","url":"https://dl.google.com/android/repository/sys-img/google_apis/x86_64-35_r09.zip","sha256":"c67b9ba0ff5bc0eb6d046871bfa228af14d4d47b02f0cdae94f048e511b7566e","official_sha1":"0103e6dab21290c4b9d16550a3ce99476f884eef","directory":"sdk/system-images/android-35/google_apis"}
+  ]
+}

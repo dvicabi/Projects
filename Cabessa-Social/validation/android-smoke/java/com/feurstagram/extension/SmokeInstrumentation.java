@@ -37,6 +37,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     private final List<String> screenshots = new ArrayList<>();
     private File output;
     private String suffix;
+    private int timeoutScale = 1;
 
     @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); options = arguments == null ? new Bundle() : arguments; start(); }
 
@@ -47,6 +48,8 @@ public final class SmokeInstrumentation extends Instrumentation {
             output = getTargetContext().getExternalFilesDir(null);
             if (output == null || (!output.isDirectory() && !output.mkdirs())) throw new IllegalStateException("No test output directory");
             suffix = options.getString("suffix", "");
+            timeoutScale = Integer.parseInt(options.getString("timeoutScale", "1"));
+            require(timeoutScale >= 1 && timeoutScale <= 8, "timeoutScale must be1..8");
             if (!"true".equals(options.getString("screenshotsOnly"))) exercisePlayback();
             renderUi();
             result.put("status", "passed");
@@ -56,6 +59,8 @@ public final class SmokeInstrumentation extends Instrumentation {
         }
         try {
             result.put("framework_checks", new JSONArray(checks));
+            result.put("timeout_scale", timeoutScale);
+            result.put("fixture_duration_seconds", 60);
             result.put("screenshots", new JSONArray(screenshots));
             result.put("scope", "Actual Android Activity/MediaPlayer with synthetic caller and local fixtures; not real Instagram Story integration");
             result.put("test_doubles", "Local fixture URL resolver plus empty nativeFetch/nativeCancel bridge bodies only; release URL gate and real native bridges validated separately");
@@ -105,7 +110,7 @@ public final class SmokeInstrumentation extends Instrumentation {
         long before = main(() -> (long) ((MediaPlayer) field(viewer, "player")).getCurrentPosition());
         ActivityMonitor recreation = addMonitor(SingleReelActivity.class.getName(), null, false);
         main(() -> { viewer.recreate(); return null; });
-        SingleReelActivity restored = (SingleReelActivity) waitForMonitorWithTimeout(recreation, 5000);
+        SingleReelActivity restored = (SingleReelActivity) waitForMonitorWithTimeout(recreation, scaled(5000));
         removeMonitor(recreation);
         require(restored != null && restored != viewer, "Recreation did not create a fresh Activity");
         await("recreated player prepared and sought", 5000, () -> (Boolean) field(restored, "prepared") && !(Boolean) field(restored, "restoringPosition"));
@@ -126,12 +131,12 @@ public final class SmokeInstrumentation extends Instrumentation {
         checks.add("unavailable_media_fails_closed_and_back_returns");
 
         byte[] bytes = Files.readAllBytes(SmokeHostActivity.fixture(origin).toPath());
-        try (SlowFixtureServer server = new SlowFixtureServer(bytes)) {
+        try (SlowFixtureServer server = new SlowFixtureServer(bytes, scaled(2000))) {
             SingleReelActivity slow = launch(origin, server.url());
             await("delayed fixture requested", 5000, () -> server.requested);
             SmokeCoverActivity delayedCover = cover(slow);
             await("preparing decoder released when covered", 5000, () -> field(slow, "player") == null);
-            SystemClock.sleep(2400);
+            SystemClock.sleep(scaled(2400));
             require(main(() -> field(slow, "player") == null && !origin.sourcePlayer.isPlaying()), "Late response restarted hidden video");
             main(() -> { slow.finish(); delayedCover.finish(); return null; });
             await("late response test returns source", 5000, () -> SmokeHostActivity.resumed);
@@ -140,7 +145,7 @@ public final class SmokeInstrumentation extends Instrumentation {
         SmokeNativeBridge.last = null;
         ActivityMonitor lookupMonitor = addMonitor(SingleReelActivity.class.getName(), null, false);
         main(() -> { SharedReelLoader.openFromStory(origin, new Object(), "123456_789", null); return null; });
-        SingleReelActivity lookup = (SingleReelActivity) waitForMonitorWithTimeout(lookupMonitor, 6000);
+        SingleReelActivity lookup = (SingleReelActivity) waitForMonitorWithTimeout(lookupMonitor, scaled(6000));
         removeMonitor(lookupMonitor);
         require(lookup != null, "Pending lookup did not open the opaque Activity first");
         await("metadata lookup waits for caller stop", 5000, () -> SmokeNativeBridge.last != null);
@@ -162,7 +167,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     private SingleReelActivity launch(SmokeHostActivity origin, String url) throws Exception {
         ActivityMonitor monitor = addMonitor(SingleReelActivity.class.getName(), null, false);
         main(() -> { SingleReelPlayer.launch(origin, url); return null; });
-        SingleReelActivity viewer = (SingleReelActivity) waitForMonitorWithTimeout(monitor, 6000);
+        SingleReelActivity viewer = (SingleReelActivity) waitForMonitorWithTimeout(monitor, scaled(6000));
         removeMonitor(monitor);
         require(viewer != null, "SingleReelActivity did not launch");
         return viewer;
@@ -171,7 +176,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     private SmokeCoverActivity cover(Activity viewer) throws Exception {
         ActivityMonitor monitor = addMonitor(SmokeCoverActivity.class.getName(), null, false);
         main(() -> { viewer.startActivity(new Intent(viewer, SmokeCoverActivity.class)); return null; });
-        SmokeCoverActivity cover = (SmokeCoverActivity) waitForMonitorWithTimeout(monitor, 5000);
+        SmokeCoverActivity cover = (SmokeCoverActivity) waitForMonitorWithTimeout(monitor, scaled(5000));
         removeMonitor(monitor);
         require(cover != null, "Opaque cover did not launch");
         return cover;
@@ -193,6 +198,26 @@ public final class SmokeInstrumentation extends Instrumentation {
                     waitForIdleSync();
                     SystemClock.sleep(450);
                     require(main(() -> CabessaUi.colors(ui).dark == dark), "Test shell theme differs from requested palette");
+                    main(() -> {
+                        int expected = "he".equals(language) ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR;
+                        ViewGroup content = (ViewGroup) ui.findViewById(android.R.id.content);
+                        ViewGroup root = (ViewGroup) content.getChildAt(0);
+                        require(root.getLayoutDirection() == expected, "Actual root layout direction differs from locale");
+                        if ("inbox".equals(scene) || "profile".equals(scene)) {
+                            require(root.getChildAt(1).getLayoutDirection() == expected,
+                                    "Actual production control container has incorrect RTL/LTR direction");
+                        }
+                        if ("settings".equals(scene)) {
+                            Field open = Settings.class.getDeclaredField("openDialog");
+                            open.setAccessible(true);
+                            android.app.Dialog dialog = (android.app.Dialog) ((java.lang.ref.WeakReference<?>) open.get(null)).get();
+                            require(dialog != null && dialog.isShowing(), "Production settings dialog did not appear");
+                            ViewGroup dialogContent = (ViewGroup) dialog.findViewById(android.R.id.content);
+                            require(dialogContent.getChildAt(0).getLayoutDirection() == expected,
+                                    "Actual production settings page has incorrect RTL/LTR direction");
+                        }
+                        return null;
+                    });
                     if ("inbox".equals(scene)) main(() -> { checkTargets(ui.getWindow().getDecorView()); return null; });
                     checkAccessibleTargets(ui.getResources().getDisplayMetrics().density);
                     screenshot(scene + "-" + language + "-" + (dark ? "dark" : "light"));
@@ -260,10 +285,11 @@ public final class SmokeInstrumentation extends Instrumentation {
     private static boolean playing(SingleReelActivity activity) throws Exception { MediaPlayer mp = (MediaPlayer) field(activity, "player"); return mp != null && (Boolean) field(activity, "prepared") && mp.isPlaying(); }
     private interface Condition { boolean ready() throws Exception; }
     private void await(String label, long timeout, Condition condition) throws Exception {
-        long deadline = SystemClock.uptimeMillis() + timeout;
+        long deadline = SystemClock.uptimeMillis() + scaled(timeout);
         while (SystemClock.uptimeMillis() < deadline) { if (main(condition::ready)) return; SystemClock.sleep(35); }
         throw new AssertionError("Timed out: " + label);
     }
+    private long scaled(long milliseconds) { return milliseconds * timeoutScale; }
     private <T> T main(Callable<T> action) throws Exception {
         AtomicReference<T> result = new AtomicReference<>();
         AtomicReference<Throwable> error = new AtomicReference<>();

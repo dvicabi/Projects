@@ -4,6 +4,7 @@ TASK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:?Set ANDROID_HOME}}"
 ADB="$SDK_ROOT/platform-tools/adb"
 OUT="$TASK_ROOT/build/android-smoke"
+TIMEOUT_SCALE="${CABESSA_SMOKE_TIMEOUT_SCALE:-1}"
 python3 "$TASK_ROOT/validation/android-smoke/build.py"
 "$ADB" wait-for-device
 "$ADB" shell settings put global window_animation_scale 0
@@ -11,10 +12,13 @@ python3 "$TASK_ROOT/validation/android-smoke/build.py"
 "$ADB" shell settings put global animator_duration_scale 0
 "$ADB" shell input keyevent KEYCODE_WAKEUP
 "$ADB" shell wm dismiss-keyguard
+# Each build uses a disposable test key; remove only the isolated test package.
+"$ADB" uninstall com.dvircab.social.smoke >/dev/null 2>&1 || true
 "$ADB" install -r "$OUT/cabessa-framework-smoke.apk"
 "$ADB" shell pm clear com.dvircab.social.smoke
 set +e
-"$ADB" shell am instrument -w com.dvircab.social.smoke/com.feurstagram.extension.SmokeInstrumentation > "$OUT/instrumentation.txt" 2>&1
+"$ADB" shell am instrument -w -e timeoutScale "$TIMEOUT_SCALE" \
+    com.dvircab.social.smoke/com.feurstagram.extension.SmokeInstrumentation > "$OUT/instrumentation.txt" 2>&1
 RUN_STATUS=$?
 set -e
 cat "$OUT/instrumentation.txt"
@@ -36,7 +40,7 @@ PY
 trap '"$ADB" shell wm size reset; "$ADB" shell wm density reset' EXIT
 "$ADB" shell wm size 960x1920
 "$ADB" shell wm density 480
-"$ADB" shell am instrument -w -e screenshotsOnly true -e suffix narrow -e largeFont true \
+"$ADB" shell am instrument -w -e screenshotsOnly true -e suffix narrow -e largeFont true -e timeoutScale "$TIMEOUT_SCALE" \
     com.dvircab.social.smoke/com.feurstagram.extension.SmokeInstrumentation > "$OUT/narrow-render.txt" 2>&1
 cat "$OUT/narrow-render.txt"
 "$ADB" pull /sdcard/Android/data/com.dvircab.social.smoke/files "$OUT/narrow-results"

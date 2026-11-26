@@ -52,7 +52,7 @@ def check_player_manifest(text: str) -> None:
                 continue
             if len(child) - len(child.lstrip()) <= depth or child.lstrip().startswith("E:"):
                 break
-            attr = re.match(r"\s*A: android:([\w]+)(?:\([^)]*\))?=(.*)", child)
+            attr = re.match(r"\s*A: (?:android:|http://schemas\.android\.com/apk/res/android:)([\w]+)(?:\([^)]*\))?=(.*)", child)
             if attr:
                 attrs[attr[1]] = attr[2]
         if attrs.get("name", "").startswith('"' + PLAYER_ACTIVITY + '"'):
@@ -60,7 +60,7 @@ def check_player_manifest(text: str) -> None:
     if len(activities) != 1:
         fail("Exactly one isolated player Activity must be present in the APK manifest.")
     attrs = activities[0]
-    if not re.match(r"\(type 0x12\)0x0(?:\s|$)", attrs.get("exported", "")):
+    if not re.match(r"(?:false|\(type 0x12\)0x0)(?:\s|$)", attrs.get("exported", "")):
         fail("The isolated player must be explicitly non-exported.")
     theme = re.match(r"@0x([0-9a-fA-F]+)(?:\s|$)", attrs.get("theme", ""))
     # android.R.style.Theme_Material_NoActionBar, a platform opaque Activity theme.
@@ -70,7 +70,7 @@ def check_player_manifest(text: str) -> None:
         if name in attrs:
             fail("The player must stay in its caller's process and task.")
     for name in ("noHistory", "launchMode", "documentLaunchMode"):
-        if name in attrs and not re.match(r"\(type 0x[0-9a-fA-F]+\)0x0(?:\s|$)", attrs[name]):
+        if name in attrs and not re.match(r"(?:false|0|\(type 0x[0-9a-fA-F]+\)0x0)(?:\s|$)", attrs[name]):
             fail("Unexpected isolated player task or history configuration.")
 
 

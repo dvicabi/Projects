@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.dvircab.social.smoke">
     <uses-permission android:name="android.permission.INTERNET" />
     <application android:label="Cabessa Social UI test" android:theme="@style/SmokeTheme"
-        android:debuggable="true" android:usesCleartextTraffic="true" android:allowBackup="false">
+        android:debuggable="true" android:usesCleartextTraffic="true" android:allowBackup="false"
+        android:supportsRtl="true">
         <activity android:name="com.feurstagram.extension.SmokeHostActivity" android:exported="false" />
         <activity android:name="com.feurstagram.extension.SmokeCoverActivity" android:exported="false" />
         <activity android:name="com.feurstagram.extension.SmokeUiActivity" android:exported="false" />

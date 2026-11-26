@@ -27,7 +27,12 @@ class ReleaseGateTests(unittest.TestCase):
                     '    A: android:exported(0x01010010)=(type 0x12)0x0\n'
                     f'    A: android:theme(0x01010000)=@0x{16974382:08x}\n')
         check_player_manifest(activity)
+        # SDK 35 aapt2 prints expanded namespaces and decoded booleans; older
+        # aapt dumps use the namespace prefix and a typed hexadecimal value.
+        aapt2_activity = activity.replace('android:', 'http://schemas.android.com/apk/res/android:').replace('(type 0x12)0x0', 'false')
+        check_player_manifest(aapt2_activity)
         for text in ('', activity + activity, activity.replace('(type 0x12)0x0', '(type 0x12)0xffffffff'),
+                     aapt2_activity.replace('=false', '=true'),
                      activity.replace(f'@0x{16974382:08x}', '@0x01030010'),
                      activity + '    A: android:process(0x01010011)=":player"\n',
                      activity + '    A: android:noHistory(0x0101022d)=(type 0x12)0xffffffff\n'):
