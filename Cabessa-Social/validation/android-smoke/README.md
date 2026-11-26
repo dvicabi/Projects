@@ -20,6 +20,13 @@ and the delayed fixture response; production handoff, lookup and media timeouts
 and every behavioral assertion remain unchanged. The synthetic video is 60 seconds
 so software rendering time cannot accidentally finish it during control checks.
 The result records the scale and fixture duration explicitly.
+When the scale exceeds 1, the identical UI pass runs before playback checks, so
+the screenshots remain available even if the software emulator later times out.
+This changes test order only; it does not convert a failed assertion into a pass.
+If the main pass fails, `run.sh` also runs a separate UI-only recovery pass before
+the narrow render. The original failed result is preserved and the script still
+exits unsuccessfully. This allows layout review while a lifecycle failure is
+being diagnosed, without claiming that playback passed.
 
 The test APK targets API 37, like the inspected Instagram base. The platform 35
 compile library suffices because the extension uses no newer APIs. The runner
@@ -33,6 +40,8 @@ resets both settings on exit. Run only against a disposable emulator.
    playing audio during `onPause` and pauses only after `super.onStop()`.
    It also checks that the shared decoder is not constructed inside that super
    callback before the caller's remaining stop logic runs.
+   The actual TextureView must contain the known synthetic video color before
+   the player screenshot is accepted; a playback flag alone is insufficient.
 2. The actual playback button pauses and resumes a real `MediaPlayer`.
 3. Covering the player with another opaque Activity releases its decoder;
    returning prepares a paused player and requires an explicit Play tap.
@@ -77,8 +86,13 @@ on the user's device.
   the explicitly labeled test shell, plus player and error screens.
 - `build/android-smoke/narrow-results/smoke-result-narrow.json` and `*.png`:
   narrow-display/large-text render results.
+- When needed, `build/android-smoke/recovery-results/` and `ui-recovery.txt`:
+  independent UI-only evidence collected after a failed main pass.
 - `build/android-smoke/instrumentation.txt`, `narrow-render.txt` and
   `android-crashes.txt`: runtime diagnostics.
+- `media-logcat.txt`: Android media/codec diagnostics. An assertion timeout also
+  records the active production player's lifecycle and preparation state and
+  captures the failure screen, without exposing media URLs or native sessions.
 
 The scripts fail when instrumentation crashes, required assertions fail, or the
 structured result is missing. Prior app data is cleared before the initial run

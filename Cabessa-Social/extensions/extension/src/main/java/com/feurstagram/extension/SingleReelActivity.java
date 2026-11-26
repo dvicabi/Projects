@@ -12,6 +12,7 @@ import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -117,7 +118,7 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.BLACK);
-        root.setFitsSystemWindows(true);
+        root.setFitsSystemWindows(false);
         root.setPadding(dp(16), dp(4), dp(16), dp(12));
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -192,7 +193,17 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
         window.setStatusBarColor(Color.BLACK);
         window.setNavigationBarColor(Color.BLACK);
         window.setBackgroundDrawableResource(android.R.color.black);
-        window.getDecorView().setSystemUiVisibility(0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false);
+            window.getDecorView().setSystemUiVisibility(0);
+        } else {
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        }
+        // fitsSystemWindows replaces, rather than adds to, View padding. Keep
+        // intentional control gutters separately from bars/cutouts on all APIs.
+        Settings.applyWindowInsets(root, (left, top, right, bottom) ->
+                root.setPadding(dp(16) + left, dp(4) + top, dp(16) + right, dp(12) + bottom));
         if (Config.isGrayscale()) Grayscale.apply(root);
     }
 

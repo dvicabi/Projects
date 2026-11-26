@@ -97,12 +97,17 @@ jobs:
           "$ANDROID_HOME/emulator/emulator" -avd CabessaApi35 -no-window -no-audio -no-boot-anim -gpu swiftshader -no-snapshot -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
           emulator_pid=$!
           trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
-          adb wait-for-device
-          for attempt in $(seq 1 90); do
-            if test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1; then break; fi
+          boot_ready=false
+          boot_deadline=$((SECONDS + 240))
+          while test "$SECONDS" -lt "$boot_deadline"; do
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then cat "$RUNNER_TEMP/emulator.log"; exit 1; fi
+            if test "$(timeout 5 adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)" = 1; then
+              boot_ready=true
+              break
+            fi
             sleep 2
           done
-          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1
+          if test "$boot_ready" != true; then cat "$RUNNER_TEMP/emulator.log"; exit 1; fi
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
@@ -119,6 +124,9 @@ jobs:
             Cabessa-Social/build/android-smoke/instrumentation.txt
             Cabessa-Social/build/android-smoke/narrow-render.txt
             Cabessa-Social/build/android-smoke/android-crashes.txt
+            Cabessa-Social/build/android-smoke/media-logcat.txt
+            Cabessa-Social/build/android-smoke/recovery-results/
+            Cabessa-Social/build/android-smoke/ui-recovery.txt
             ${{ runner.temp }}/emulator.log
           if-no-files-found: warn
           retention-days: 7

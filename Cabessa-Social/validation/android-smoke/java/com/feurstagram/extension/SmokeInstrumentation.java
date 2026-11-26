@@ -50,12 +50,19 @@ public final class SmokeInstrumentation extends Instrumentation {
             suffix = options.getString("suffix", "");
             timeoutScale = Integer.parseInt(options.getString("timeoutScale", "1"));
             require(timeoutScale >= 1 && timeoutScale <= 8, "timeoutScale must be1..8");
-            if (!"true".equals(options.getString("screenshotsOnly"))) exercisePlayback();
-            renderUi();
+            boolean screenshotsOnly = "true".equals(options.getString("screenshotsOnly"));
+            // Secure actual UI evidence before timing-sensitive media checks on
+            // software-only emulators. The same assertions still determine pass/fail.
+            boolean screenshotsFirst = timeoutScale > 1 && !screenshotsOnly;
+            result.put("screenshots_first", screenshotsFirst);
+            if (screenshotsFirst) renderUi();
+            if (!screenshotsOnly) exercisePlayback();
+            if (!screenshotsFirst) renderUi();
             result.put("status", "passed");
             exit = Activity.RESULT_OK;
         } catch (Throwable error) {
             try { result.put("status", "failed"); result.put("error", trace(error)); } catch (Exception ignored) {}
+            try { if (output != null) screenshot("failure"); } catch (Throwable ignored) {}
         }
         try {
             result.put("framework_checks", new JSONArray(checks));
@@ -85,6 +92,7 @@ public final class SmokeInstrumentation extends Instrumentation {
             }
             return false;
         });
+        await("real fixture video frame reaches TextureView", 8000, () -> hasFixtureFrame(viewer));
         checks.add("opaque_handoff_waits_for_caller_stop_before_media_start");
         screenshot("shared-player");
         main(() -> { ((Button) field(viewer, "playback")).performClick(); return null; });
@@ -283,11 +291,60 @@ public final class SmokeInstrumentation extends Instrumentation {
     private Intent intent(Class<? extends Activity> type) { return new Intent(getTargetContext(), type).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); }
     private static Object field(Object instance, String name) throws Exception { Field field = instance.getClass().getDeclaredField(name); field.setAccessible(true); return field.get(instance); }
     private static boolean playing(SingleReelActivity activity) throws Exception { MediaPlayer mp = (MediaPlayer) field(activity, "player"); return mp != null && (Boolean) field(activity, "prepared") && mp.isPlaying(); }
+    private static boolean hasFixtureFrame(SingleReelActivity activity) throws Exception {
+        android.view.TextureView texture = (android.view.TextureView) field(activity,"texture");
+        if (!texture.isAvailable()) return false;
+        Bitmap bitmap = texture.getBitmap(3,3);
+        if (bitmap == null) return false;
+        try {
+            int pixel = bitmap.getPixel(1,1);
+            int red = android.graphics.Color.red(pixel), blue = android.graphics.Color.blue(pixel);
+            return red >= 30 && blue >= 60 && blue > red + 15;
+        } finally { bitmap.recycle(); }
+    }
+    private String viewerSnapshot() {
+        JSONObject diagnostic = new JSONObject();
+        try {
+            Field active = SingleReelPlayer.class.getDeclaredField("active");
+            active.setAccessible(true);
+            SingleReelActivity viewer = (SingleReelActivity) ((java.lang.ref.WeakReference<?>) active.get(null)).get();
+            diagnostic.put("active",viewer != null);
+            if (viewer != null) {
+                diagnostic.put("finishing",viewer.isFinishing());
+                diagnostic.put("destroyed",viewer.isDestroyed());
+                diagnostic.put("windowFocus",viewer.hasWindowFocus());
+                for (String key : new String[]{"prepared","restoringPosition","failed","finished","lookupPending","lookupStarted","savedPosition"}) {
+                    diagnostic.put(key,field(viewer,key));
+                }
+                diagnostic.put("hasSource",field(viewer,"source") != null);
+                android.view.TextureView texture = (android.view.TextureView)field(viewer,"texture");
+                diagnostic.put("textureAvailable",texture != null && texture.isAvailable());
+                diagnostic.put("textureWidth",texture == null ? 0 : texture.getWidth());
+                diagnostic.put("textureHeight",texture == null ? 0 : texture.getHeight());
+                Object policy = field(viewer,"state");
+                JSONObject state = new JSONObject();
+                for (String key : new String[]{"sourceStopped","resumed","focused","prepared","wantsPlayback","failed","closed"}) state.put(key,field(policy,key));
+                diagnostic.put("state",state);
+                MediaPlayer mp = (MediaPlayer)field(viewer,"player");
+                diagnostic.put("playerNull",mp == null);
+                if (mp != null) {
+                    try { diagnostic.put("position",mp.getCurrentPosition()); diagnostic.put("playing",mp.isPlaying()); diagnostic.put("duration",mp.getDuration()); }
+                    catch (IllegalStateException error) { diagnostic.put("mediaError",error.toString()); }
+                }
+                diagnostic.put("status",String.valueOf(((android.widget.TextView)field(viewer,"status")).getText()));
+            }
+            diagnostic.put("sourceStopped",SmokeHostActivity.stopped);
+            diagnostic.put("sourceResumed",SmokeHostActivity.resumed);
+        } catch (Exception error) {
+            try { diagnostic.put("snapshotError",error.toString()); } catch (Exception ignored) {}
+        }
+        return diagnostic.toString();
+    }
     private interface Condition { boolean ready() throws Exception; }
     private void await(String label, long timeout, Condition condition) throws Exception {
         long deadline = SystemClock.uptimeMillis() + scaled(timeout);
         while (SystemClock.uptimeMillis() < deadline) { if (main(condition::ready)) return; SystemClock.sleep(35); }
-        throw new AssertionError("Timed out: " + label);
+        throw new AssertionError("Timed out: " + label + "; viewer=" + main(this::viewerSnapshot));
     }
     private long scaled(long milliseconds) { return milliseconds * timeoutScale; }
     private <T> T main(Callable<T> action) throws Exception {
