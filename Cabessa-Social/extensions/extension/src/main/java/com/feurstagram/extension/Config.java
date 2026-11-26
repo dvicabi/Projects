@@ -9,7 +9,7 @@ import android.content.SharedPreferences;
  * preferences so an old backup cannot relax a content block.
  */
 public final class Config {
-    public static final String RELEASE_VERSION = "0.1.5";
+    public static final String RELEASE_VERSION = "0.1.6";
     private static final String DISPLAY_PREFS = "instagram_social_display";
     private Config() {}
 

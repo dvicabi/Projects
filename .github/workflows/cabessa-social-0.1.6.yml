@@ -1,0 +1,122 @@
+name: Cabessa Social 0.1.6 Android verification
+on:
+  push:
+    branches: [cabessa-social-v0.1.6]
+    paths: ['Cabessa-Social/**', '.github/workflows/cabessa-social-0.1.6.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cabessa-social-v0.1.6
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+        working-directory: Cabessa-Social
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Select JDK 21 and rerun source gates
+        run: |
+          set -euo pipefail
+          test -n "${JAVA_HOME_21_X64:-}"
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_21_X64/bin" >> "$GITHUB_PATH"
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m unittest discover -s scripts -p 'test_release_checks.py' -v
+      - name: Install Android SDK and verified compiler dependencies
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-$RUNNER_TEMP/android-sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          mkdir -p "$ANDROID_HOME"
+          sdkmanager="$(command -v sdkmanager || true)"
+          if test -z "$sdkmanager"; then
+            sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+            if ! test -x "$sdkmanager"; then
+              mkdir -p "$ANDROID_HOME/cmdline-tools" "$RUNNER_TEMP/cabessa-sdk-unpack"
+              curl --fail --location --retry 2 --connect-timeout 20 --max-time 480 --output "$RUNNER_TEMP/cabessa-cmdtools.zip" 'https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip'
+              unzip -q "$RUNNER_TEMP/cabessa-cmdtools.zip" -d "$RUNNER_TEMP/cabessa-sdk-unpack"
+              mv "$RUNNER_TEMP/cabessa-sdk-unpack/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+            fi
+          fi
+          set +o pipefail
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+          set -o pipefail
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" --install 'platforms;android-35' 'build-tools;35.0.0'
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          mkdir -p tools
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          lock = json.loads(pathlib.Path("scripts/manual_toolchain.json").read_text())
+          files = {"morphe_cli":"morphe-desktop-2.3.0-all.jar", "patches_library":"morphe-patches-library-2.3.0.jar", "gradle_distribution":"gradle-9.5.0-bin.zip"}
+          for key, name in files.items():
+              dest = pathlib.Path("tools") / name
+              subprocess.run(["curl", "--fail", "--location", "--retry", "2", "--connect-timeout", "20", "--max-time", "480", "--output", str(dest), lock[key]["url"]], check=True)
+              with dest.open("rb") as stream:
+                  actual = hashlib.file_digest(stream, "sha256").hexdigest()
+              if actual != lock[key]["sha256"]:
+                  raise SystemExit(f"Checksum mismatch: {name}")
+          PY
+          unzip -q tools/gradle-9.5.0-bin.zip -d tools
+          python3 scripts/build_bundle.py --check
+          python3 scripts/build_bundle.py
+      - name: Preserve verified compiled patch bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cabessa-social-0.1.6-compiled-patches
+          path: |
+            Cabessa-Social/patches/build/libs/cabessa-social-patches-0.1.6.mpp
+            Cabessa-Social/patches/build/libs/bundle-build-receipt.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Install emulator test dependencies
+        run: |
+          set -euo pipefail
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$sdkmanager" --install 'platform-tools' 'emulator' 'system-images;android-35;google_apis;x86_64'
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq; sudo apt-get install -y ffmpeg; fi
+          sudo chmod 666 /dev/kvm
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --force --name cabessa-validation --package 'system-images;android-35;google_apis;x86_64' --device pixel_2
+      - name: Run Android lifecycle and layout smoke checks
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/emulator/emulator" -avd cabessa-validation -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
+          trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
+          adb wait-for-device
+          for attempt in $(seq 1 90); do
+            if test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1; then break; fi
+            sleep 2
+          done
+          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          bash validation/android-smoke/run.sh
+      - name: Preserve Android review evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cabessa-social-0.1.6-android-smoke
+          path: |
+            Cabessa-Social/build/android-smoke/device-results/
+            Cabessa-Social/build/android-smoke/narrow-results/
+            Cabessa-Social/build/android-smoke/source-receipt.json
+            Cabessa-Social/build/android-smoke/instrumentation.txt
+            Cabessa-Social/build/android-smoke/narrow-render.txt
+            Cabessa-Social/build/android-smoke/android-crashes.txt
+            ${{ runner.temp }}/emulator.log
+          if-no-files-found: warn
+          retention-days: 7

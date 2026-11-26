@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SmokeTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowIsFloating">false</item>
+    </style>
+    <style name="PlayerTheme" parent="SmokeTheme">
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:colorAccent">#FFFFFF</item>
+    </style>
+</resources>

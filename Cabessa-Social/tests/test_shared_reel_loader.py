@@ -51,6 +51,7 @@ static android.app.Activity forContext(android.content.Context c){return c insta
 'com/feurstagram/extension/Config.java': 'package com.feurstagram.extension;class Config {static boolean isGrayscale(){return false;}}',
 'com/feurstagram/extension/Grayscale.java': 'package com.feurstagram.extension;class Grayscale {static void apply(android.view.View v){}}',
 'com/feurstagram/extension/SingleReelPlayer.java': '''package com.feurstagram.extension;class SingleReelPlayer {
+static void resolve(android.content.Context c,Object session,String id){SharedReelLoader.loadInPlayer((android.app.Activity)c,session,id);}
 static int opens,errors;static Object selected;static boolean open(android.content.Context c,Object media){opens++;selected=media;return true;}static void unavailable(android.content.Context c){errors++;}}
 ''',
 'com/feurstagram/extension/FakeNative.java': '''package com.feurstagram.extension;
@@ -72,23 +73,23 @@ static void check(boolean v,String reason){if(!v)throw new AssertionError(reason
 static FakeNative.Request start(Activity a,String id){SharedReelLoader.open(a,new Object(),id,null);return FakeNative.last();}
 static void cleaned(Activity a,FakeNative.Request r){check(!SharedReelRequestGate.allows(r.uri),"capability not revoked");check(r.cancels==1,"native request not cancelled exactly once");check(a.getApplication().callbacks.isEmpty(),"lifecycle callback leaked");}
 public static void main(String[] args){
-Activity a=new Activity();FakeNative.Request r=start(a,"123_4");check(AlertDialog.last.shown,"no loading dialog");r.callback.success(java.util.List.of("123_4"));cleaned(a,r);check(SingleReelPlayer.opens==1&&"123_4".equals(SingleReelPlayer.selected),"selected media not dispatched");check(!AlertDialog.last.shown,"loading dialog leaked");
+Activity a=new Activity();FakeNative.Request r=start(a,"123_4");check(!a.getApplication().callbacks.isEmpty(),"lookup has no lifecycle owner");r.callback.success(java.util.List.of("123_4"));cleaned(a,r);check(SingleReelPlayer.opens==1&&"123_4".equals(SingleReelPlayer.selected),"selected media not dispatched");
 int opened=SingleReelPlayer.opens, errors=SingleReelPlayer.errors;
 a=new Activity();r=start(a,"123");r.callback.success(java.util.List.of("999_4"));cleaned(a,r);check(SingleReelPlayer.opens==opened&&SingleReelPlayer.errors==++errors,"mismatched media played");
 a=new Activity();r=start(a,"123");r.callback.success(java.util.List.of("123_4","123_4"));cleaned(a,r);check(SingleReelPlayer.errors==++errors,"ambiguous response accepted");
-a=new Activity();r=start(a,"123");AlertDialog.last.cancel();cleaned(a,r);r.callback.success(java.util.List.of("123_4"));check(SingleReelPlayer.opens==opened&&SingleReelPlayer.errors==errors,"cancelled response opened viewer");
+a=new Activity();r=start(a,"123");a.pause();cleaned(a,r);r.callback.success(java.util.List.of("123_4"));check(SingleReelPlayer.opens==opened&&SingleReelPlayer.errors==errors,"cancelled response opened viewer");
 a=new Activity();FakeNative.Request old=start(a,"123");r=start(a,"456");check(!SharedReelRequestGate.allows(old.uri)&&old.cancels==1,"old selection remains active");old.callback.success(java.util.List.of("123_4"));check(SingleReelPlayer.opens==opened,"stale callback opened viewer");r.callback.success(java.util.List.of("456_7"));cleaned(a,r);check(SingleReelPlayer.opens==++opened&&"456_7".equals(SingleReelPlayer.selected),"second selection lost");
 a=new Activity();r=start(a,"123");Handler.fireTimers();cleaned(a,r);check(SingleReelPlayer.errors==++errors,"timeout omitted error");r.callback.success(java.util.List.of("123_4"));check(SingleReelPlayer.opens==opened,"late timeout callback opened viewer");
-a=new Activity();r=start(a,"123");a.pause();cleaned(a,r);r.callback.success(java.util.List.of("123_4"));check(SingleReelPlayer.errors==errors&&SingleReelPlayer.opens==opened,"background callback reopened dialog");
+a=new Activity();r=start(a,"123");a.pause();cleaned(a,r);r.callback.success(java.util.List.of("123_4"));check(SingleReelPlayer.errors==errors&&SingleReelPlayer.opens==opened,"background callback reopened player");
 a=new Activity();r=start(a,"123");android.os.Looper.main=false;r.callback.success(java.util.List.of("123_4"));android.os.Looper.main=true;a.pause();Handler.runPosted();cleaned(a,r);check(SingleReelPlayer.errors==errors&&SingleReelPlayer.opens==opened,"queued success reopened after pause");
 a=new Activity();r=start(a,"123");r.callback.failure(new Object());cleaned(a,r);check(SingleReelPlayer.errors==++errors,"failure omitted error");
 a=new Activity();FakeNative.throwsOnFetch=true;r=start(a,"123");FakeNative.throwsOnFetch=false;check(!SharedReelRequestGate.allows(r.uri)&&a.getApplication().callbacks.isEmpty(),"scheduling exception leaked grant/lifecycle");check(SingleReelPlayer.errors==++errors,"scheduling exception not shown");
 a=new Activity();FakeNative.synchronous=true;r=start(a,"123");FakeNative.synchronous=false;cleaned(a,r);check(SingleReelPlayer.opens==++opened,"synchronous callback lost");
-a=new Activity();SharedReelLoader.open(a,new Object(),null,"test-shortcode");r=FakeNative.last();check(r.json.equals("[\\\"777\\\"]"),"shortcode not converted");AlertDialog.last.cancel();cleaned(a,r);
+a=new Activity();SharedReelLoader.open(a,new Object(),null,"test-shortcode");r=FakeNative.last();check(r.json.equals("[\\\"777\\\"]"),"shortcode not converted");a.pause();cleaned(a,r);
 int count=FakeNative.requests.size();a=new Activity();SharedReelLoader.open(a,new Object(),"123\\\",\\\"456",null);check(FakeNative.requests.size()==count&&SingleReelPlayer.errors==++errors,"malformed selection reached native fetch");
 // Story shares reuse the same restricted request and lifecycle, not a second player.
 a=new Activity();SharedReelLoader.openFromStory(a,new Object(),"456_7","999");r=FakeNative.last();check(r.json.equals("["+((char)34)+"456_7"+((char)34)+"]"),"story primary ID lost");r.callback.success(java.util.List.of("456_7"));cleaned(a,r);check(SingleReelPlayer.opens==++opened&&"456_7".equals(SingleReelPlayer.selected),"story video not opened");
-a=new Activity();SharedReelLoader.openFromStory(a,new Object(),null,"888");r=FakeNative.last();check(r.json.equals("["+((char)34)+"888"+((char)34)+"]"),"story fallback ID lost");AlertDialog.last.cancel();cleaned(a,r);r.callback.success(java.util.List.of("888_1"));check(SingleReelPlayer.opens==opened,"dismissed story reopened");
+a=new Activity();SharedReelLoader.openFromStory(a,new Object(),null,"888");r=FakeNative.last();check(r.json.equals("["+((char)34)+"888"+((char)34)+"]"),"story fallback ID lost");a.pause();cleaned(a,r);r.callback.success(java.util.List.of("888_1"));check(SingleReelPlayer.opens==opened,"dismissed story reopened");
 count=FakeNative.requests.size();a=new Activity();SharedReelLoader.openFromStory(a,new Object(),"not-an-id","888");check(FakeNative.requests.size()==count&&SingleReelPlayer.errors==++errors,"malformed story ID was replaced with a different media ID");
 a=new Activity();SharedReelLoader.openFromStory(a,new Object(),null,null);check(FakeNative.requests.size()==count&&SingleReelPlayer.errors==++errors,"missing story ID reached network");
 System.out.println("Shared Reel loader: selected-only dispatch, ID mismatch, duplicate response, cancel, stale callbacks, timeout, pause, errors, synchronous completion and shortcode: OK");

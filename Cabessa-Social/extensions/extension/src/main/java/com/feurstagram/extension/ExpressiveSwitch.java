@@ -5,17 +5,15 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.PathInterpolator;
 import android.widget.CompoundButton;
 
-/** Resource-free Material 3 switch, using the shared monochrome settings palette. */
+/** Compact switch with a 48dp target and the host's light/dark palette. */
 final class ExpressiveSwitch extends CompoundButton {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF track = new RectF();
-    private final Path check = new Path();
     private float position;
     private float press;
     private ValueAnimator movement;
@@ -32,7 +30,7 @@ final class ExpressiveSwitch extends CompoundButton {
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        setMeasuredDimension(resolveSize(dp(64), widthSpec), resolveSize(dp(48), heightSpec));
+        setMeasuredDimension(resolveSize(dp(56), widthSpec), resolveSize(dp(48), heightSpec));
     }
 
     @Override
@@ -78,42 +76,27 @@ final class ExpressiveSwitch extends CompoundButton {
     @Override
     protected void onDraw(Canvas canvas) {
         float scale = getResources().getDisplayMetrics().density;
-        float left = (getWidth() - 52f * scale) / 2f;
+        CabessaUi.Palette palette = CabessaUi.colors(getContext());
+        float left = (getWidth() - 44f * scale) / 2f;
         float centerY = getHeight() / 2f;
-        track.set(left, centerY - 16f * scale, left + 52f * scale, centerY + 16f * scale);
+        track.set(left, centerY - 13f * scale, left + 44f * scale, centerY + 13f * scale);
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(blend(Settings.SURFACE_CONTAINER_HIGH, Settings.PRIMARY, position));
-        canvas.drawRoundRect(track, 16f * scale, 16f * scale, paint);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(2f * scale);
-        paint.setColor(blend(Settings.OUTLINE, Settings.PRIMARY, position));
-        track.inset(scale, scale);
-        canvas.drawRoundRect(track, 15f * scale, 15f * scale, paint);
+        int off = palette.dark ? 0xFF555555 : 0xFFA8A8A8;
+        paint.setColor(blend(off, palette.primary, position));
+        paint.setAlpha(isEnabled() ? 255 : 100);
+        canvas.drawRoundRect(track, 13f * scale, 13f * scale, paint);
 
         float offset = getLayoutDirection() == LAYOUT_DIRECTION_RTL ? 1f - position : position;
-        float centerX = left + (16f + 20f * offset) * scale;
+        float centerX = left + (13f + 18f * offset) * scale;
         paint.setStyle(Paint.Style.FILL);
         if (press > 0f || isFocused()) {
-            paint.setColor(Color.argb((int) (31f * Math.max(press, isFocused() ? 1f : 0f)), 255, 255, 255));
-            canvas.drawCircle(centerX, centerY, 20f * scale, paint);
+            paint.setColor(palette.text);
+            paint.setAlpha((int) (26f * Math.max(press, isFocused() ? 1f : 0f)));
+            canvas.drawCircle(centerX, centerY, 22f * scale, paint);
         }
-        float diameter = 16f + 8f * position;
-        diameter += (28f - diameter) * press;
-        paint.setColor(blend(Settings.OUTLINE, Settings.ON_PRIMARY, position));
-        canvas.drawCircle(centerX, centerY, diameter * scale / 2f, paint);
-
-        if (position > 0f) {
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(2f * scale);
-            paint.setStrokeCap(Paint.Cap.ROUND);
-            paint.setStrokeJoin(Paint.Join.ROUND);
-            paint.setColor(Color.argb((int) (255f * position), 255, 255, 255));
-            check.reset();
-            check.moveTo(centerX - 4f * scale, centerY);
-            check.lineTo(centerX - scale, centerY + 3f * scale);
-            check.lineTo(centerX + 5f * scale, centerY - 4f * scale);
-            canvas.drawPath(check, paint);
-        }
+        paint.setColor(Color.WHITE);
+        paint.setAlpha(isEnabled() ? 255 : 160);
+        canvas.drawCircle(centerX, centerY, 10f * scale, paint);
     }
 
     @Override

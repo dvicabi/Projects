@@ -210,6 +210,8 @@ printf 'Signing with the configured release key.\n'
 "$APKSIGNER" verify --verbose --print-certs "$WORK/cabessa-social.apk" > "$WORK/release-signature.txt"
 "$ZIPALIGN" -c -P 16 4 "$WORK/cabessa-social.apk"
 "$AAPT2" dump badging "$WORK/cabessa-social.apk" > "$WORK/release-badging.txt"
+"$AAPT2" dump xmltree --file AndroidManifest.xml "$WORK/cabessa-social.apk" > "$WORK/release-manifest.txt"
+python3 "$CHECKER" check-player "$WORK/cabessa-social.apk" "$WORK/release-manifest.txt"
 python3 "$CHECKER" verify-release "$WORK/cabessa-social.apk" \
     "$WORK/release-signature.txt" "$WORK/release-badging.txt" "$SIGNER_SHA"
 python3 "$CHECKER" receipt "$DIR" "$WORK" "$INPUT_APK" "$INPUT_SHA" "$BASE_SHA" \

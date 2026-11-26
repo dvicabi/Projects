@@ -121,7 +121,7 @@ def build(tools: dict) -> Path:
     patcher_version = next(line.partition("=")[2].strip() for line in properties.splitlines() if line.startswith("version="))
     metadata = {
         "Manifest-Version": "1.0", "Name": "Cabessa Social Patches",
-        "Description": "Fixed social-only Instagram policy", "Version": "0.1.5",
+        "Description": "Fixed social-only Instagram policy", "Version": "0.1.6",
         "Patcher-Version": patcher_version, "Author": "Cabessa Social contributors",
         "License": "GPLv3",
     }
@@ -140,7 +140,7 @@ def build(tools: dict) -> Path:
         if name.endswith(".class"):
             if len(content) < 8 or content[:4] != b"\xca\xfe\xba\xbe" or struct.unpack_from(">H", content, 6)[0] > 61:
                 raise ValueError(f"Bundle class is not compatible with the Java 17 patch loader: {name}")
-    staged = work / "cabessa-social-patches-0.1.5.mpp"
+    staged = work / "cabessa-social-patches-0.1.6.mpp"
     write_zip(staged, entries)
     run([tools["java"], "-jar", tools["cli"], "list-patches", f"--patches={staged}"], work / "bundle-load.log")
     listing = (work / "bundle-load.log").read_text()

@@ -4,8 +4,12 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.text.InputType;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -29,23 +33,45 @@ final class FeedMuteSettings {
                         "הסתר פרסומים בלי לבטל מעקב. סטורי, פרופילים והודעות נשארים. לאחר שינוי יש לרענן את הפיד."));
         Dialog dialog = Settings.newPageDialog(activity,page.root);
         LinearLayout add = Settings.addSection(activity,page.content,tr(activity,"Hide a username","הסתרת שם משתמש"));
+        CabessaUi.Palette palette = CabessaUi.colors(activity);
         EditText input = new EditText(activity);
         input.setSingleLine(true); input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         input.setHint("@username"); input.setTextDirection(View.TEXT_DIRECTION_LTR);
-        input.setTextColor(Settings.ON_SURFACE); input.setHintTextColor(Settings.ON_SURFACE_VARIANT);
-        add.addView(input,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
-        Button addButton = Settings.makeButton(activity,tr(activity,"Hide from feed","הסתר מהפיד"),Settings.PRIMARY,Settings.ON_PRIMARY,true);
-        add.addView(addButton);
+        input.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        input.setTextColor(palette.text); input.setHintTextColor(palette.secondary);
+        input.setBackground(CabessaUi.rounded(activity,palette.raised,8));
+        input.setBackgroundTintList(null);
+        input.setMinimumHeight(Settings.dp(activity,48));
+        input.setPadding(Settings.dp(activity,14),Settings.dp(activity,12),Settings.dp(activity,14),Settings.dp(activity,12));
+        input.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        input.setContentDescription(tr(activity,"Instagram username to hide","שם משתמש באינסטגרם להסתרה"));
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        inputParams.bottomMargin = Settings.dp(activity,12);
+        add.addView(input,inputParams);
+        Button addButton = CabessaUi.primaryButton(activity,tr(activity,"Hide from feed","הסתר מהפיד"));
+        add.addView(addButton,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout hidden=Settings.addSection(activity,page.content,tr(activity,"Hidden accounts","חשבונות מוסתרים"));
         LinearLayout recent=Settings.addSection(activity,page.content,tr(activity,"Recently loaded authors","חשבונות שהופיעו בפיד לאחרונה"));
         Runnable refresh=()->render(activity,hidden,recent);
-        addButton.setOnClickListener(v->{
+        View.OnClickListener submit = v->{
             String name=FeedMuteRules.name(input.getText().toString());
             if(name==null) { input.setError(tr(activity,"Enter a valid Instagram username","יש להזין שם משתמש תקין")); return; }
-            if(FeedMutes.hide(activity,null,name)) { input.setText(""); saved(activity); refresh.run(); }
+            if(FeedMutes.hide(activity,null,name)) {
+                input.setText(""); input.clearFocus();
+                InputMethodManager keyboard = activity.getSystemService(InputMethodManager.class);
+                if(keyboard != null) keyboard.hideSoftInputFromWindow(input.getWindowToken(),0);
+                saved(activity); refresh.run();
+            }
             else failed(activity);
+        };
+        addButton.setOnClickListener(submit);
+        input.setOnEditorActionListener((view,action,event)->{
+            if(action != EditorInfo.IME_ACTION_DONE) return false;
+            submit.onClick(addButton);
+            return true;
         });
-        Button close=page.addAction(Settings.makeButton(activity,tr(activity,"Done","סיום"),Settings.PRIMARY,Settings.ON_PRIMARY,true));
+        Button close=page.addAction(CabessaUi.secondaryButton(activity,tr(activity,"Done","סיום")));
         close.setOnClickListener(v->dialog.dismiss());
         refresh.run(); dialog.show();
     }
@@ -54,18 +80,37 @@ final class FeedMuteSettings {
         List<String> hiddenRules=FeedMutes.hidden(c);
         if(hiddenRules.isEmpty()) Settings.makeRow(c,hidden,tr(c,"No hidden accounts","אין חשבונות מוסתרים"),null);
         for(String r:hiddenRules) {
-            LinearLayout row=Settings.makeRow(c,hidden,"@"+FeedMuteRules.ruleName(r),
-                    tr(c,"Tap to show in feed again","לחץ כדי להחזיר לפיד"));
-            row.setOnClickListener(v->{if(FeedMutes.restore(c,r)) {saved(c);render(c,hidden,recent);} else failed(c);});
+            LinearLayout row=accountRow(c,hidden,r,tr(c,"Hidden from feed","מוסתר מהפיד"));
+            Button restore=accountAction(c,row,tr(c,"Show","הצג"),
+                    tr(c,"Show @","הצג את @")+FeedMuteRules.ruleName(r)+tr(c," in feed"," בפיד"));
+            restore.setOnClickListener(v->{if(FeedMutes.restore(c,r)) {saved(c);render(c,hidden,recent);} else failed(c);});
         }
         List<String> recentRules=FeedMutes.recent(c);
         if(recentRules.isEmpty()) Settings.makeRow(c,recent,tr(c,"Open and refresh the following feed first","פתח ורענן את פיד הנעקבים תחילה"),null);
         for(String r:recentRules) {
-            LinearLayout row=Settings.makeRow(c,recent,"@"+FeedMuteRules.ruleName(r),
-                    tr(c,"Tap to hide from feed","לחץ כדי להסתיר מהפיד"));
-            row.setOnClickListener(v->{if(FeedMutes.hide(c,FeedMuteRules.ruleId(r),FeedMuteRules.ruleName(r))) {saved(c);render(c,hidden,recent);} else failed(c);});
+            LinearLayout row=accountRow(c,recent,r,null);
+            Button hide=accountAction(c,row,tr(c,"Hide","הסתר"),
+                    tr(c,"Hide @","הסתר את @")+FeedMuteRules.ruleName(r)+tr(c," from feed"," מהפיד"));
+            hide.setOnClickListener(v->{if(FeedMutes.hide(c,FeedMuteRules.ruleId(r),FeedMuteRules.ruleName(r))) {saved(c);render(c,hidden,recent);} else failed(c);});
         }
         Settings.sealGroup(c,hidden); Settings.sealGroup(c,recent);
+    }
+    private static LinearLayout accountRow(Context c,LinearLayout group,String rule,String support) {
+        LinearLayout row=Settings.makeRow(c,group,"@"+FeedMuteRules.ruleName(rule),support);
+        LinearLayout texts=(LinearLayout)row.getChildAt(0);
+        TextView username=(TextView)texts.getChildAt(0);
+        username.setTextDirection(View.TEXT_DIRECTION_LTR);
+        username.setSingleLine(true);
+        username.setEllipsize(TextUtils.TruncateAt.END);
+        return row;
+    }
+    private static Button accountAction(Context c,LinearLayout row,String title,String description) {
+        Button button=CabessaUi.secondaryButton(c,title);
+        button.setContentDescription(description);
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMarginStart(Settings.dp(c,12));
+        row.addView(button,params);
+        return button;
     }
     private static String tr(Context c,String en,String he) { return Settings.label(c,en,he); }
     private static void saved(Context c) { Toast.makeText(c,tr(c,"Saved. Refresh the feed to apply.","נשמר. רענן את הפיד כדי להחיל."),Toast.LENGTH_SHORT).show(); }

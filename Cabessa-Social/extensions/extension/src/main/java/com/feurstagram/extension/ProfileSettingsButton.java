@@ -4,11 +4,6 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.view.View;
@@ -20,7 +15,7 @@ import android.widget.LinearLayout;
 import java.lang.ref.WeakReference;
 
 /**
- * A Feurstagram icon in the header of the signed-in user's own profile, just
+ * A preferences icon in the header of the signed-in user's own profile, just
  * before the menu button: a tap opens display preferences and local credits.
  *
  * <h2>Why there</h2>
@@ -94,7 +89,7 @@ public final class ProfileSettingsButton {
         }
     }
 
-    /** Add the button just before the menu (the group's last button), at its exact size. */
+    /** Add the button before the menu, preserving a usable 48dp touch target. */
     private static void attach(LinearLayout buttons, View menu) {
         ButtonView button = new ButtonView(buttons.getContext(), iconColor(menu), iconSize(menu));
         button.setOnClickListener(ProfileSettingsButton::open);
@@ -106,8 +101,8 @@ public final class ProfileSettingsButton {
         // menu button's own measured size.
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 (LinearLayout.LayoutParams) menu.getLayoutParams());
-        lp.width = menu.getWidth();
-        lp.height = menu.getHeight();
+        lp.width = Math.max(menu.getWidth(), Settings.dp(buttons.getContext(),48));
+        lp.height = Math.max(menu.getHeight(), Settings.dp(buttons.getContext(),48));
         buttons.addView(button, buttons.indexOfChild(menu), lp);
     }
 
@@ -135,19 +130,21 @@ public final class ProfileSettingsButton {
         return inner > 0 ? Math.min(glyph.getIntrinsicHeight(), inner) : glyph.getIntrinsicHeight();
     }
 
-    /** The button itself: the logo centred in its slot. */
+    /** The button itself: a familiar preferences glyph centred in its slot. */
     static final class ButtonView extends View {
-        private final Logo logo;
+        private final CabessaUi.LineIcon icon;
         private final int iconSize;
 
         ButtonView(Context context, int color, int iconSize) {
             super(context);
-            this.iconSize = iconSize;
-            logo = new Logo(color);
+            this.iconSize = Math.max(Settings.dp(context,20),Math.min(iconSize,Settings.dp(context,24)));
+            icon = new CabessaUi.LineIcon(CabessaUi.Icon.SLIDERS,color);
             setClickable(true);
             setFocusable(true);
             setContentDescription(Settings.label(context, "Display and about", "תצוגה ואודות"));
-            setBackground(new RippleDrawable(ColorStateList.valueOf(0x33808080), null, null));
+            setTooltipText(getContentDescription());
+            setBackground(new RippleDrawable(ColorStateList.valueOf(0x33808080), null,
+                    CabessaUi.rounded(context,0xFFFFFFFF,24)));
         }
 
         @Override
@@ -155,47 +152,10 @@ public final class ProfileSettingsButton {
             super.onDraw(canvas);
             int left = (getWidth() - iconSize) / 2;
             int top = (getHeight() - iconSize) / 2;
-            logo.setBounds(left, top, left + iconSize, top + iconSize);
-            logo.draw(canvas);
-        }
-    }
-
-    /**
-     * The Feurstagram mark as a line icon, on Instagram's 24-unit grid with its
-     * 2-unit stroke: a rounded diamond around a ring.
-     */
-    static final class Logo extends Drawable {
-        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final RectF square = new RectF();
-
-        Logo(int color) {
-            paint.setColor(color);
-            paint.setStyle(Paint.Style.STROKE);
+            icon.setBounds(left, top, left + iconSize, top + iconSize);
+            icon.draw(canvas);
         }
 
-        @Override
-        public void draw(Canvas canvas) {
-            Rect b = getBounds();
-            float unit = Math.min(b.width(), b.height()) / 24f;
-            float cx = b.exactCenterX();
-            float cy = b.exactCenterY();
-            paint.setStrokeWidth(2f * unit);
-
-            float half = 8f * unit;
-            square.set(cx - half, cy - half, cx + half, cy + half);
-            canvas.save();
-            canvas.rotate(45f, cx, cy);
-            canvas.drawRoundRect(square, 5f * unit, 5f * unit, paint);
-            canvas.restore();
-
-            canvas.drawCircle(cx, cy, 3.6f * unit, paint);
-        }
-
-        @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
-        @Override public void setColorFilter(ColorFilter filter) { paint.setColorFilter(filter); }
-        @Override public void setTint(int color) { paint.setColor(color); }
-        @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
-        @Override public int getIntrinsicWidth() { return 24; }
-        @Override public int getIntrinsicHeight() { return 24; }
+        @Override public CharSequence getAccessibilityClassName() { return "android.widget.Button"; }
     }
 }

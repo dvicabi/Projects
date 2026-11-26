@@ -5,6 +5,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.resourcePatch
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
@@ -16,6 +17,7 @@ import com.feurstagram.patches.network.feedItemFilterPatch
 import com.feurstagram.patches.quoicouview.addBridge
 import com.feurstagram.patches.shared.Constants.COMPATIBILITY_INSTAGRAM
 import com.feurstagram.patches.shared.Constants.EXTENSION
+import org.w3c.dom.Element
 
 private const val LOADER = "Lcom/feurstagram/extension/SharedReelLoader;"
 private const val CALLBACK = "Lcom/feurstagram/extension/NativeReelCallback;"
@@ -31,6 +33,30 @@ private const val STORY_HANDLER = "LX/0Fvp;"
 private const val INTERACTIVE = "Lcom/instagram/reels/interactive/Interactive;"
 private const val PRODUCT = "Lcom/instagram/model/mediatype/ProductType;"
 private const val FRAGMENT_ACTIVITY = "Landroidx/fragment/app/FragmentActivity;"
+private const val PLAYER_ACTIVITY = "com.feurstagram.extension.SingleReelActivity"
+
+/** A real opaque screen makes the source Story receive Android's pause/stop lifecycle. */
+private val singleReelActivityPatch = resourcePatch {
+    execute {
+        document("AndroidManifest.xml").use { document ->
+            val application = document.documentElement.getElementsByTagName("application").item(0) as? Element
+                ?: throw PatchException("Manifest application is missing")
+            val activities = application.getElementsByTagName("activity")
+            val existing = (0 until activities.length).map { activities.item(it) as Element }
+                .filter { it.getAttribute("android:name") == PLAYER_ACTIVITY }
+            if (existing.size > 1) throw PatchException("Duplicate isolated player Activity")
+            val activity = existing.singleOrNull() ?: document.createElement("activity").also {
+                application.appendChild(it)
+            }
+            activity.setAttribute("android:name", PLAYER_ACTIVITY)
+            activity.setAttribute("android:exported", "false")
+            activity.setAttribute("android:theme", "@android:style/Theme.Material.NoActionBar")
+            activity.setAttribute("android:hardwareAccelerated", "true")
+            // Use the caller's existing task/back stack, with ordinary Activity
+            // lifecycle. No translucent, floating, noHistory or separate task.
+        }
+    }
+}
 
 /** Story interactive-card click, not the story pager or global Clips launcher. */
 private object StorySharedReelFingerprint : Fingerprint(
@@ -101,7 +127,7 @@ val singleSharedReelPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_INSTAGRAM)
-    dependsOn(feedItemFilterPatch)
+    dependsOn(feedItemFilterPatch, singleReelActivityPatch)
     extendWith(EXTENSION)
 
     execute {

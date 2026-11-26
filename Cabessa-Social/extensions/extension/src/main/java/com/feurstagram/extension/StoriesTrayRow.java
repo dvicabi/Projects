@@ -1,11 +1,13 @@
 package com.feurstagram.extension;
 
 import android.content.Context;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Locale;
@@ -59,36 +61,67 @@ public final class StoriesTrayRow {
     /** Stories remain a direct child so existing story visibility hooks still work. */
     static final class Host extends LinearLayout {
         private final Button following;
+        private final Button manage;
+        private final LinearLayout actions;
         private View currentTray;
 
         Host(Context context) {
             super(context);
             setOrientation(VERTICAL);
+            setLayoutDirection(View.LAYOUT_DIRECTION_LOCALE);
             Locale locale = context.getResources().getConfiguration().getLocales().get(0);
             if (locale == null) locale = Locale.getDefault();
             boolean hebrew = locale != null && ("he".equals(locale.getLanguage())
                     || "iw".equals(locale.getLanguage()));
-            following = new Button(context);
-            following.setText(hebrew ? "פרסומים מהחברים · מהחדש לישן" : "Friends' posts · Newest first");
-            following.setAllCaps(false);
-            following.setMinHeight(Math.round(48 * getResources().getDisplayMetrics().density));
-            int margin = Math.round(12 * getResources().getDisplayMetrics().density);
-            LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            params.setMargins(margin, 0, margin, margin);
-            addView(following, params);
-            Button manage = new Button(context);
-            manage.setText(hebrew ? "ניהול הפיד · הסתרת חשבונות" : "Manage feed · Hidden accounts");
-            manage.setAllCaps(false);
-            manage.setMinHeight(Math.round(44 * getResources().getDisplayMetrics().density));
-            LayoutParams manageParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            manageParams.setMargins(margin, 0, margin, margin);
-            addView(manage, manageParams);
+            LinearLayout panel = new LinearLayout(context);
+            panel.setOrientation(VERTICAL);
+            actions = new LinearLayout(context);
+            actions.setOrientation(HORIZONTAL);
+            actions.setGravity(Gravity.CENTER_VERTICAL);
+            following = CabessaUi.primaryButton(context,hebrew ? "פרסומים מהחברים" : "Friends' posts");
+            following.setContentDescription(hebrew ? "פרסומים מהחברים, מהחדש לישן" : "Friends' posts, newest first");
+            actions.addView(following,new LayoutParams(0,LayoutParams.WRAP_CONTENT,1f));
+            manage = CabessaUi.secondaryButton(context,hebrew ? "ניהול הפיד" : "Manage feed");
+            manage.setContentDescription(hebrew ? "ניהול הפיד והסתרת חשבונות" : "Manage feed and hidden accounts");
+            LayoutParams manageParams = new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+            manageParams.setMarginStart(CabessaUi.dp(context,8));
+            actions.addView(manage,manageParams);
+            panel.addView(actions,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
+            TextView chronology = new TextView(context);
+            chronology.setText(hebrew ? "מהחדש לישן" : "Newest first");
+            chronology.setTextSize(12);
+            chronology.setTextColor(CabessaUi.colors(context).secondary);
+            chronology.setPadding(0,CabessaUi.dp(context,6),0,0);
+            panel.addView(chronology,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
+            LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT);
+            int margin = CabessaUi.dp(context,16);
+            params.setMargins(margin,CabessaUi.dp(context,8),margin,CabessaUi.dp(context,12));
+            addView(panel,params);
             manage.setOnClickListener(view -> FeedMuteSettings.show(context));
             following.setOnClickListener(view -> {
                 if (!openFollowing(view)) {
                     Toast.makeText(context, hebrew ? "פיד הנעקבים אינו זמין כרגע" : "Following feed is not available right now", Toast.LENGTH_SHORT).show();
                 }
             });
+        }
+
+        @Override protected void onMeasure(int widthSpec,int heightSpec) {
+            int width=View.MeasureSpec.getSize(widthSpec);
+            boolean stacked=getResources().getConfiguration().fontScale >= 1.3f
+                    || (width > 0 && width < CabessaUi.dp(getContext(),340));
+            int orientation=stacked ? VERTICAL : HORIZONTAL;
+            if(actions.getOrientation()!=orientation) {
+                actions.setOrientation(orientation);
+                following.setLayoutParams(stacked
+                        ? new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)
+                        : new LayoutParams(0,LayoutParams.WRAP_CONTENT,1f));
+                LayoutParams params=new LayoutParams(stacked ? LayoutParams.MATCH_PARENT : LayoutParams.WRAP_CONTENT,
+                        LayoutParams.WRAP_CONTENT);
+                params.setMarginStart(stacked ? 0 : CabessaUi.dp(getContext(),8));
+                params.topMargin=stacked ? CabessaUi.dp(getContext(),8) : 0;
+                manage.setLayoutParams(params);
+            }
+            super.onMeasure(widthSpec,heightSpec);
         }
 
         /** Move only the native tray; never remove or duplicate the shortcut. */

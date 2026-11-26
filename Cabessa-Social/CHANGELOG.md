@@ -1,12 +1,21 @@
 # Changelog
 
-## 0.1.5 — persistent local feed exclusions (source preview)
+## 0.1.6 — consistent controls and isolated Story playback
+
+- Use one restrained light/dark control system for Home, settings, hidden accounts and the shared-video player. Preserve Hebrew RTL, 48dp targets and large-text layouts.
+- Replace the fullscreen video dialog with a non-exported opaque Activity; keep the source Story paused during lookup and playback.
+- Wait until the original Activity has completed stopping before preparing a decoder. Require foreground ownership and a new Play tap after returning from background or recreation.
+- Release media resources, cancel lookup and revoke the selected-request capability on cancellation or backgrounding.
+- Add behavioral lifecycle regressions, compiled-APK manifest/class gates and an Android framework harness using synthetic media. The harness does not validate Instagram account behavior.
+- Release validation is in progress; see the versioned publication report for completed evidence.
+
+## 0.1.5 — persistent local feed exclusions
 
 - Add a home and settings entry for hiding and restoring feed authors.
 - Store explicit exclusions in private Android preferences; observe up to 200 recent authors in process memory.
 - Prefer stable author IDs, upgrade manual handles on observation, and preserve native feed cursors and order.
 - Restrict filtering to successful timeline responses; keep profiles, stories, messages and login unchanged.
-- Source tests pass; Android UI, APK build and device acceptance remain pending.
+- Signed APK produced on 2026-11-26; real-device acceptance remained pending.
 
 ## 0.1.4 — shared Reel from Stories (source preview)
 

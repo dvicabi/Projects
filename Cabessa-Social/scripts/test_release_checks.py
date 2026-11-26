@@ -8,6 +8,7 @@ from pathlib import Path
 from release_checks import (
     FORBIDDEN_CLASSES, OWN_KEY_PATCH, REQUIRED_PATCHES,
     check_badging, check_base_signers, check_dex, check_report, normalize_digest, signer_digests,
+    check_player_manifest,
 )
 
 
@@ -20,6 +21,19 @@ GOOD_BADGING = "package: name='com.dvircab.social' versionCode='1'\napplication-
 
 
 class ReleaseGateTests(unittest.TestCase):
+    def test_player_manifest_rejects_missing_duplicate_exported_or_translucent_activity(self):
+        activity = ('  E: activity (line=1)\n'
+                    '    A: android:name(0x01010003)="com.feurstagram.extension.SingleReelActivity"\n'
+                    '    A: android:exported(0x01010010)=(type 0x12)0x0\n'
+                    f'    A: android:theme(0x01010000)=@0x{16974382:08x}\n')
+        check_player_manifest(activity)
+        for text in ('', activity + activity, activity.replace('(type 0x12)0x0', '(type 0x12)0xffffffff'),
+                     activity.replace(f'@0x{16974382:08x}', '@0x01030010'),
+                     activity + '    A: android:process(0x01010011)=":player"\n',
+                     activity + '    A: android:noHistory(0x0101022d)=(type 0x12)0xffffffff\n'):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                check_player_manifest(text)
+
     def test_complete_report_passes(self):
         self.assertEqual(set(check_report(good_report(), False)), REQUIRED_PATCHES)
 

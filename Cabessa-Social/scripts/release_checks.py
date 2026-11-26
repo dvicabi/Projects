@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -31,6 +32,93 @@ FORBIDDEN_CLASSES = tuple(
     ("Lcom/feurstagram/extension/" + name + ";").encode()
     for name in ("DebugBridge", "UpdateChecker", "Ghost", "Timer", "TimerPill", "TimerSettings")
 )
+PLAYER_ACTIVITY = "com.feurstagram.extension.SingleReelActivity"
+PLAYER_CLASSES = {"Lcom/feurstagram/extension/" + name + ";" for name in
+                  ("SingleReelActivity", "SingleReelHandoff", "SingleReelPlaybackState", "CabessaUi")}
+
+
+def check_player_manifest(text: str) -> None:
+    """Check the final compiled manifest, not only the resource-patch source."""
+    activities = []
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        match = re.match(r"^(\s*)E: activity(?:\s|$)", line)
+        if not match:
+            continue
+        depth = len(match[1])
+        attrs = {}
+        for child in lines[index + 1:]:
+            if not child.strip():
+                continue
+            if len(child) - len(child.lstrip()) <= depth or child.lstrip().startswith("E:"):
+                break
+            attr = re.match(r"\s*A: android:([\w]+)(?:\([^)]*\))?=(.*)", child)
+            if attr:
+                attrs[attr[1]] = attr[2]
+        if attrs.get("name", "").startswith('"' + PLAYER_ACTIVITY + '"'):
+            activities.append(attrs)
+    if len(activities) != 1:
+        fail("Exactly one isolated player Activity must be present in the APK manifest.")
+    attrs = activities[0]
+    if not re.match(r"\(type 0x12\)0x0(?:\s|$)", attrs.get("exported", "")):
+        fail("The isolated player must be explicitly non-exported.")
+    theme = re.match(r"@0x([0-9a-fA-F]+)(?:\s|$)", attrs.get("theme", ""))
+    # android.R.style.Theme_Material_NoActionBar, a platform opaque Activity theme.
+    if not theme or int(theme[1], 16) != 16974382:
+        fail("The isolated player must use the reviewed opaque platform theme.")
+    for name in ("process", "taskAffinity"):
+        if name in attrs:
+            fail("The player must stay in its caller's process and task.")
+    for name in ("noHistory", "launchMode", "documentLaunchMode"):
+        if name in attrs and not re.match(r"\(type 0x[0-9a-fA-F]+\)0x0(?:\s|$)", attrs[name]):
+            fail("Unexpected isolated player task or history configuration.")
+
+
+def dex_class_descriptors(data: bytes) -> set[str]:
+    """Read defined class descriptors, so a stray string cannot satisfy the gate."""
+    if len(data) < 112 or not data.startswith(b"dex\n"):
+        fail("Invalid DEX header in release APK.")
+    string_count, string_offset, type_count, type_offset = struct.unpack_from("<4I", data, 56)
+    class_count, class_offset = struct.unpack_from("<2I", data, 96)
+    for count, offset, width in ((string_count, string_offset, 4), (type_count, type_offset, 4),
+                                 (class_count, class_offset, 32)):
+        if offset + count * width > len(data):
+            fail("DEX class table exceeds the file.")
+    result = set()
+    for index in range(class_count):
+        type_index = struct.unpack_from("<I", data, class_offset + index * 32)[0]
+        if type_index >= type_count:
+            fail("Invalid DEX class type.")
+        string_index = struct.unpack_from("<I", data, type_offset + type_index * 4)[0]
+        if string_index >= string_count:
+            fail("Invalid DEX type descriptor.")
+        offset = struct.unpack_from("<I", data, string_offset + string_index * 4)[0]
+        # Skip the unsigned LEB128 UTF-16 length; descriptors are ASCII here.
+        for _ in range(5):
+            if offset >= len(data):
+                fail("Invalid DEX descriptor offset.")
+            value = data[offset]
+            offset += 1
+            if value < 128:
+                break
+        else:
+            fail("Invalid DEX string length.")
+        end = data.find(b"\0", offset)
+        if end < 0:
+            fail("Unterminated DEX descriptor.")
+        result.add(data[offset:end].decode("utf-8", errors="replace"))
+    return result
+
+
+def check_player_classes(apk: Path) -> None:
+    classes = set()
+    with zipfile.ZipFile(apk) as archive:
+        for name in archive.namelist():
+            if re.fullmatch(r"classes(?:\d+)?\.dex", name):
+                classes.update(dex_class_descriptors(archive.read(name)))
+    missing = PLAYER_CLASSES - classes
+    if missing:
+        fail("Isolated player implementation missing from APK: " + ", ".join(sorted(missing)))
 
 
 def fail(message: str) -> None:
@@ -216,6 +304,7 @@ def receipt(args: list[str]) -> None:
             "package_label_permissions_debug_status": "passed",
             "removed_extension_classes": "passed",
             "required_patches": "passed",
+            "isolated_player_manifest_and_classes": "passed",
             "on_device_acceptance": "not_run_by_build_script",
             "traffic_privacy_validation": "not_run_by_build_script",
         },
@@ -261,6 +350,10 @@ def main(args: list[str]) -> None:
         print("APK package, label, release flags, permissions, extension classes and signer verified.")
     elif command == "source-snapshot":
         Path(values[1]).write_text(json.dumps(source_files(Path(values[0])), indent=2) + "\n")
+    elif command == "check-player":
+        check_player_manifest(Path(values[1]).read_text())
+        check_player_classes(Path(values[0]))
+        print("Opaque non-exported isolated player Activity and defined implementation classes verified.")
     elif command == "receipt":
         receipt(values)
     else:

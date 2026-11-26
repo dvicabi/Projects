@@ -20,6 +20,7 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -31,42 +32,25 @@ import java.util.WeakHashMap;
 /** Display preferences and local attribution. Content policy is fixed in Config. */
 public final class Settings {
 
-    // --- Colour: a neutral dark scheme with white as the single accent --------
+    // Dark defaults retained for callers that pass an explicit colour. Pages
+    // resolve CabessaUi's palette from the host context when they are opened.
 
     /** Page background. */
-    public static final int SURFACE = 0xFF0E0E0E;
+    public static final int SURFACE = 0xFF000000;
     /** Cards, list rows. */
-    public static final int SURFACE_CONTAINER = 0xFF1B1B1B;
+    public static final int SURFACE_CONTAINER = 0xFF121212;
     /** One step up: tonal buttons, the raised confirm card. */
     public static final int SURFACE_CONTAINER_HIGH = 0xFF262626;
     public static final int ON_SURFACE = 0xFFF4F4F4;
     public static final int ON_SURFACE_VARIANT = 0xFFABABAB;
     public static final int OUTLINE = 0xFF757575;
     public static final int OUTLINE_VARIANT = 0xFF3A3A3A;
-    /** The accent. Monochrome by design: white. */
-    public static final int PRIMARY = 0xFFFFFFFF;
-    public static final int ON_PRIMARY = 0xFF101010;
-    /**
-     * Destructive actions. A monochrome scheme has no red to lean on, so they
-     * carry the same accent and are distinguished by their wording instead.
-     */
-    public static final int ERROR = 0xFFFFFFFF;
-    public static final int ON_ERROR = 0xFF101010;
+    public static final int PRIMARY = 0xFF4A5DF9;
+    public static final int ON_PRIMARY = 0xFFFFFFFF;
+    public static final int ERROR = 0xFFED4956;
+    public static final int ON_ERROR = 0xFFFFFFFF;
     public static final int DIVIDER = 0xFF2A2A2A;
     public static final int RIPPLE = 0x26FFFFFF;
-
-    // --- Shape: the M3 Expressive corner scale --------------------------------
-
-    /** Dialog / card corners. */
-    private static final float CORNER_XL = 28f;
-    /** The outer corners of a connected list group. */
-    private static final float CORNER_L = 24f;
-    /** The joints inside a connected list group. */
-    private static final float CORNER_JOINT = 4f;
-    /** Larger than half a view's height, so it renders as a pill. */
-    private static final float CORNER_FULL = 200f;
-    /** Gap between the rows of a connected group. */
-    private static final int ROW_GAP_DP = 3;
 
     private Settings() {}
 
@@ -144,6 +128,7 @@ public final class Settings {
             LinearLayout mutes = makeRow(activity, feed, label(activity, "Manage hidden accounts", "ניהול חשבונות מוסתרים"),
                     label(activity, "Choose whose posts to hide locally, without unfollowing.", "בחר ממי להסתיר פרסומים בלי לבטל מעקב."));
             mutes.setOnClickListener(v -> FeedMuteSettings.show(activity));
+            addChevron(mutes);
             sealGroup(activity, feed);
 
             LinearLayout about = addSection(activity, page.content, label(activity, "About", "אודות"));
@@ -155,10 +140,10 @@ public final class Settings {
                     label(activity, "License and credits", "רישיון וקרדיטים"),
                     "FeurStagram contributors · Morphe · Piko · GPLv3");
             license.setOnClickListener(v -> showLicense(activity));
+            addChevron(license);
             sealGroup(activity, about);
 
-            Button done = page.addAction(makeButton(activity, label(activity, "Done", "סיום"),
-                    PRIMARY, ON_PRIMARY, true));
+            Button done = page.addAction(CabessaUi.primaryButton(activity, label(activity, "Done", "סיום")));
             toggle.setOnCheckedChangeListener((button, enabled) -> {
                 selected[0] = enabled;
                 done.setText(enabled == initial ? label(activity, "Done", "סיום")
@@ -218,8 +203,7 @@ public final class Settings {
         page.content.addView(text, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         Dialog dialog = newPageDialog(context, page.root);
-        Button close = page.addAction(makeButton(context, label(context, "Back", "חזרה"),
-                PRIMARY, ON_PRIMARY, true));
+        Button close = page.addAction(CabessaUi.secondaryButton(context, label(context, "Back", "חזרה")));
         close.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
@@ -247,20 +231,22 @@ public final class Settings {
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
 
-        // The surface underneath is dark, so the bar icons must be light — the
-        // host activity may have asked for the opposite.
+        // Each page follows the host appearance, including the system bar icons.
+        boolean light = CabessaUi.isLight(background);
         View decor = window.getDecorView();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             WindowInsetsController controller = window.getInsetsController();
             if (controller != null) {
-                controller.setSystemBarsAppearance(0,
+                int appearance = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                controller.setSystemBarsAppearance(light ? appearance : 0,
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                                 | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
             }
         } else {
-            decor.setSystemUiVisibility(decor.getSystemUiVisibility()
-                    & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                    & ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            int appearance = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            decor.setSystemUiVisibility(light ? decor.getSystemUiVisibility() | appearance
+                    : decor.getSystemUiVisibility() & ~appearance);
         }
     }
 
@@ -342,7 +328,7 @@ public final class Settings {
     // --- The full-screen page scaffold ----------------------------------------
 
     /**
-     * The shape every Feurstagram full-screen surface takes: a headline block, a
+     * The shape of each local full-screen settings page: a headline block, a
      * scrolling middle that absorbs whatever space is left, and an action row
      * pinned above the navigation bar. Local pages are built
      * on it, so they inset, centre and shrink identically.
@@ -363,7 +349,7 @@ public final class Settings {
             this.actions = actions;
         }
 
-        /** Add a pill that shares the action row equally with its siblings. */
+        /** Add an action that shares the row equally with its siblings. */
         public Button addAction(Button button) {
             Context context = actions.getContext();
             if (actions.getChildCount() > 0) {
@@ -380,22 +366,18 @@ public final class Settings {
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setLayoutDirection(View.LAYOUT_DIRECTION_LOCALE);
-        root.setBackgroundColor(SURFACE);
-        applyPageInsets(root, 20, 12, CONTENT_MAX_WIDTH_DP);
+        root.setBackgroundColor(CabessaUi.colors(context).background);
+        applyPageInsets(root, 16, 8, CONTENT_MAX_WIDTH_DP);
 
         LinearLayout header = new LinearLayout(context);
         header.setOrientation(LinearLayout.VERTICAL);
-        header.setPadding(dp(context, 4), dp(context, 12), dp(context, 4), dp(context, 4));
+        header.setPadding(0, dp(context, 12), 0, dp(context, 16));
         root.addView(header);
 
         ScrollView scroll = new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
-        // The fading edge is drawn inside the scroller's padding, so bottom
-        // padding here would leave a band of unfaded rows under the fade. The
-        // breathing room goes on the content instead, keeping the fade flush
-        // with the scroller's edge, right above the action row.
-        scroll.setVerticalFadingEdgeEnabled(true);
-        scroll.setFadingEdgeLength(dp(context, 28));
+        // Preserve breathing room above the pinned action without masking rows.
+        scroll.setVerticalFadingEdgeEnabled(false);
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(0, 0, 0, dp(context, 12));
@@ -435,19 +417,19 @@ public final class Settings {
         Dialog dialog = new Dialog(context, android.R.style.Theme_Material_NoActionBar);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(content);
-        styleWindow(dialog, SURFACE, 0f);
+        styleWindow(dialog, CabessaUi.colors(context).background, 0f);
         return dialog;
     }
 
-    /** A sentence-case section label, M3 Expressive style (not all-caps). */
+    /** Sentence-case section heading, aligned with its rows. */
     static void addSectionLabel(Context context, LinearLayout parent, String text) {
         TextView label = new TextView(context);
         label.setText(text);
-        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
-        label.setTextColor(ON_SURFACE_VARIANT);
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
+        label.setTextColor(CabessaUi.colors(context).text);
         label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        label.setLetterSpacing(0.01f);
-        label.setPadding(dp(context, 16), dp(context, 24), dp(context, 16), dp(context, 8));
+        label.setLetterSpacing(0f);
+        label.setPadding(0, dp(context, 20), 0, dp(context, 8));
         parent.addView(label);
     }
 
@@ -460,25 +442,12 @@ public final class Settings {
         return group;
     }
 
-    /**
-     * Give a finished group its connected shape: round on the outside, nearly
-     * square where rows meet, with a hairline gap between them.
-     */
+    /** Flat native-style rows with a quiet divider, not a stack of large cards. */
     static void sealGroup(Context context, LinearLayout group) {
         int count = group.getChildCount();
         for (int i = 0; i < count; i++) {
             View row = group.getChildAt(i);
-            float top = i == 0 ? CORNER_L : CORNER_JOINT;
-            float bottom = i == count - 1 ? CORNER_L : CORNER_JOINT;
-            row.setBackground(ripple(RIPPLE,
-                    roundedRect(SURFACE_CONTAINER, context, top, top, bottom, bottom)));
-            if (i < count - 1) {
-                ViewGroup.LayoutParams lp = row.getLayoutParams();
-                if (lp instanceof LinearLayout.LayoutParams) {
-                    ((LinearLayout.LayoutParams) lp).bottomMargin = dp(context, ROW_GAP_DP);
-                    row.setLayoutParams(lp);
-                }
-            }
+            row.setBackground(CabessaUi.rowBackground(context, i < count - 1));
         }
     }
 
@@ -487,7 +456,7 @@ public final class Settings {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(context, 20), dp(context, 16), dp(context, 20), dp(context, 16));
+        row.setPaddingRelative(0, dp(context, 14), 0, dp(context, 14));
         row.setMinimumHeight(dp(context, 64));
 
         LinearLayout texts = new LinearLayout(context);
@@ -495,15 +464,15 @@ public final class Settings {
 
         TextView labelView = new TextView(context);
         labelView.setText(label);
-        labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
-        labelView.setTextColor(ON_SURFACE);
+        labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
+        labelView.setTextColor(CabessaUi.colors(context).text);
         texts.addView(labelView);
 
         if (support != null) {
             TextView supportView = new TextView(context);
             supportView.setText(support);
             supportView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
-            supportView.setTextColor(ON_SURFACE_VARIANT);
+            supportView.setTextColor(CabessaUi.colors(context).secondary);
             supportView.setLineSpacing(0f, 1.1f);
             supportView.setPadding(0, dp(context, 2), 0, 0);
             texts.addView(supportView);
@@ -515,25 +484,35 @@ public final class Settings {
         return row;
     }
 
+    private static void addChevron(LinearLayout row) {
+        Context context = row.getContext();
+        ImageView arrow = new ImageView(context);
+        arrow.setImageDrawable(new CabessaUi.LineIcon(CabessaUi.Icon.CHEVRON, CabessaUi.colors(context).secondary));
+        arrow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(context, 20), dp(context, 20));
+        params.setMarginStart(dp(context, 12));
+        row.addView(arrow, params);
+    }
+
     public static void headline(TextView view) {
-        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f);
-        view.setTextColor(ON_SURFACE);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
+        view.setTextColor(CabessaUi.colors(view.getContext()).text);
         view.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        view.setLetterSpacing(-0.02f);
+        view.setLetterSpacing(0f);
     }
 
     /** A card or dialog title. */
     public static void titleLarge(TextView view) {
-        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
-        view.setTextColor(ON_SURFACE);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f);
+        view.setTextColor(CabessaUi.colors(view.getContext()).text);
         view.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        view.setLetterSpacing(-0.01f);
+        view.setLetterSpacing(0f);
     }
 
     /** Supporting text. */
     public static void body(TextView view) {
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f);
-        view.setTextColor(ON_SURFACE_VARIANT);
+        view.setTextColor(CabessaUi.colors(view.getContext()).secondary);
         view.setLineSpacing(0f, 1.15f);
     }
 
@@ -567,11 +546,11 @@ public final class Settings {
         return drawable;
     }
 
-    /** A transparent pill with a hairline border, for low-emphasis buttons. */
+    /** A quiet outlined control with the shared button radius. */
     public static Drawable outlined(Context context, int strokeColor) {
-        GradientDrawable shape = roundedRect(Color.TRANSPARENT, CORNER_FULL, context);
+        GradientDrawable shape = roundedRect(Color.TRANSPARENT, 8, context);
         shape.setStroke(dp(context, 1), strokeColor);
-        return ripple(RIPPLE, shape);
+        return ripple(CabessaUi.colors(context).ripple, shape);
     }
 
     public static Drawable ripple(int color, Drawable content) {
@@ -587,23 +566,10 @@ public final class Settings {
         return new ColorStateList(states, colors);
     }
 
-    /** A pill button. Expressive metrics: 52dp tall, generous horizontal padding. */
+    /** Shared 48dp action target, sentence case and an 8dp corner radius. */
     public static Button makeButton(Context context, String text, int bgColor, int textColor, boolean filled) {
-        Button button = new Button(context);
-        button.setText(text);
-        button.setAllCaps(false);
-        button.setTextColor(textColor);
-        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
-        button.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        button.setLetterSpacing(0f);
-        button.setMinHeight(dp(context, 52));
-        button.setMinimumHeight(dp(context, 52));
-        button.setPadding(dp(context, 20), 0, dp(context, 20), 0);
-        button.setStateListAnimator(null);
-        button.setBackground(filled
-                ? ripple(RIPPLE, roundedRect(bgColor, CORNER_FULL, context))
-                : ripple(RIPPLE, roundedRect(Color.TRANSPARENT, CORNER_FULL, context)));
-        return button;
+        return CabessaUi.button(context, text, filled ? bgColor : Color.TRANSPARENT,
+                textColor, CabessaUi.colors(context), filled);
     }
 
     public static View makeDivider(Context context, int color) {

@@ -1,17 +1,11 @@
 package com.feurstagram.extension;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Gravity;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -30,7 +24,6 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
     private final String mediaId;
     private final String module;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private AlertDialog dialog;
     private Object request;
     private boolean finished;
     private boolean registered;
@@ -55,8 +48,8 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
             try { resolved = nativeIdFromCode(shortcode); } catch (Throwable ignored) {}
         }
         final String selected = resolved;
-        if (Looper.myLooper() == Looper.getMainLooper()) start(context, session, selected);
-        else MAIN.post(() -> start(context, session, selected));
+        if (Looper.myLooper() == Looper.getMainLooper()) openSelected(context, session, selected);
+        else MAIN.post(() -> openSelected(context, session, selected));
     }
 
     /** Only the explicit native CLIPS sticker click calls this. Match the original
@@ -65,12 +58,20 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
         open(context, session, primaryId != null ? primaryId : fallbackId, null);
     }
 
-    private static void start(Context context, Object session, String mediaId) {
+    private static void openSelected(Context context, Object session, String mediaId) {
         SharedReelLoader previous = active.get();
         if (previous != null) previous.finish(false, null);
-        Activity owner = Activities.forContext(context);
+        // The opaque screen pauses the source immediately, including the lookup
+        // interval. Its handoff keeps the session only in private process memory.
+        SingleReelPlayer.resolve(context, session, mediaId);
+    }
+
+    /** Called by the isolated foreground Activity after its source-stop barrier. */
+    static void loadInPlayer(Activity owner, Object session, String mediaId) {
+        SharedReelLoader previous = active.get();
+        if (previous != null) previous.finish(false, null);
         if (!Activities.hasWindow(owner) || session == null) {
-            SingleReelPlayer.unavailable(context);
+            SingleReelPlayer.unavailable(owner);
             return;
         }
         String module = SharedReelRequestGate.authorize(mediaId);
@@ -81,7 +82,6 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
         SharedReelLoader loader = new SharedReelLoader(owner, mediaId, module);
         active = new WeakReference<>(loader);
         try {
-            loader.showLoading(owner);
             owner.getApplication().registerActivityLifecycleCallbacks(loader);
             loader.registered = true;
             loader.handler.postDelayed(() -> loader.finish(true, null), LOAD_TIMEOUT_MS);
@@ -130,28 +130,10 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
         finish(true, null);
     }
 
-    private void showLoading(Activity owner) {
-        LinearLayout content = new LinearLayout(owner);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setGravity(Gravity.CENTER);
-        int padding = Math.round(24 * owner.getResources().getDisplayMetrics().density);
-        content.setPadding(padding, padding, padding, padding);
-        content.addView(new ProgressBar(owner), new LinearLayout.LayoutParams(padding * 2, padding * 2));
-        TextView caption = new TextView(owner);
-        caption.setText(text(owner, "טוען את הסרטון שנבחר…", "Loading the selected video…"));
-        caption.setPadding(0, padding, 0, 0);
-        caption.setGravity(Gravity.CENTER);
-        content.addView(caption, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        dialog = new AlertDialog.Builder(owner)
-                .setTitle(text(owner, "סרטון משותף", "Shared video"))
-                .setView(content)
-                .setNegativeButton(text(owner, "ביטול", "Cancel"), (ignored, which) -> finish(false, null))
-                .create();
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.setOnCancelListener(ignored -> finish(false, null));
-        dialog.setOnDismissListener(ignored -> { if (!finished) finish(false, null); });
-        dialog.show();
-        if (Config.isGrayscale()) Grayscale.apply(content);
+    /** Explicit close/background cancellation; safe alongside lifecycle callbacks. */
+    static void cancel(Activity owner) {
+        SharedReelLoader loader = active.get();
+        if (loader != null && loader.activity.get() == owner) loader.finish(false, null);
     }
 
     /** Must run on the UI thread. Later callbacks are ignored after this point. */
@@ -166,9 +148,6 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
         Activity owner = activity.get();
         if (registered && owner != null) owner.getApplication().unregisterActivityLifecycleCallbacks(this);
         registered = false;
-        AlertDialog loading = dialog;
-        dialog = null;
-        if (loading != null) loading.dismiss();
         if (active.get() == this) active.clear();
         if (!presentResult || !Activities.hasWindow(owner)) return;
         if (media == null || !SingleReelPlayer.open(owner, media)) SingleReelPlayer.unavailable(owner);
@@ -176,11 +155,6 @@ public final class SharedReelLoader implements Application.ActivityLifecycleCall
 
     private static void cancelSafely(Object request) {
         try { nativeCancel(request); } catch (Throwable ignored) {}
-    }
-
-    private static String text(Context context, String he, String en) {
-        String language = context.getResources().getConfiguration().getLocales().get(0).getLanguage();
-        return "he".equals(language) || "iw".equals(language) ? he : en;
     }
 
     @Override public void onActivityPaused(Activity a) { if (a == activity.get()) finish(false, null); }

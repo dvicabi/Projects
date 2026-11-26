@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+TASK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:?Set ANDROID_HOME}}"
+ADB="$SDK_ROOT/platform-tools/adb"
+OUT="$TASK_ROOT/build/android-smoke"
+python3 "$TASK_ROOT/validation/android-smoke/build.py"
+"$ADB" wait-for-device
+"$ADB" shell settings put global window_animation_scale 0
+"$ADB" shell settings put global transition_animation_scale 0
+"$ADB" shell settings put global animator_duration_scale 0
+"$ADB" shell input keyevent KEYCODE_WAKEUP
+"$ADB" shell wm dismiss-keyguard
+"$ADB" install -r "$OUT/cabessa-framework-smoke.apk"
+"$ADB" shell pm clear com.dvircab.social.smoke
+set +e
+"$ADB" shell am instrument -w com.dvircab.social.smoke/com.feurstagram.extension.SmokeInstrumentation > "$OUT/instrumentation.txt" 2>&1
+RUN_STATUS=$?
+set -e
+cat "$OUT/instrumentation.txt"
+"$ADB" pull /sdcard/Android/data/com.dvircab.social.smoke/files "$OUT/device-results" || true
+"$ADB" logcat -d -s AndroidRuntime:E > "$OUT/android-crashes.txt"
+if [ "$RUN_STATUS" -ne 0 ]; then exit "$RUN_STATUS"; fi
+python3 - "$OUT/device-results/smoke-result.json" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+if not path.is_file():
+    raise SystemExit('Instrumentation did not produce a result')
+result = json.loads(path.read_text())
+print(json.dumps(result, ensure_ascii=False, indent=2))
+if result.get('status') != 'passed' or len(result.get('framework_checks', [])) < 8:
+    raise SystemExit('Android framework smoke checks failed')
+PY
+# A second render uses a genuinely narrow display and large text, not a resized PNG.
+trap '"$ADB" shell wm size reset; "$ADB" shell wm density reset' EXIT
+"$ADB" shell wm size 960x1920
+"$ADB" shell wm density 480
+"$ADB" shell am instrument -w -e screenshotsOnly true -e suffix narrow -e largeFont true \
+    com.dvircab.social.smoke/com.feurstagram.extension.SmokeInstrumentation > "$OUT/narrow-render.txt" 2>&1
+cat "$OUT/narrow-render.txt"
+"$ADB" pull /sdcard/Android/data/com.dvircab.social.smoke/files "$OUT/narrow-results"
+python3 - "$OUT/narrow-results/smoke-result-narrow.json" <<'PY'
+import json, sys
+result = json.load(open(sys.argv[1]))
+if result.get('status') != 'passed':
+    raise SystemExit('Narrow/large-text rendering failed')
+PY
