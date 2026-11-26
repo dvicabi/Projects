@@ -7,7 +7,7 @@
 - Wait until the original Activity has completed stopping before preparing a decoder. Require foreground ownership and a new Play tap after returning from background or recreation.
 - Release media resources, cancel lookup and revoke the selected-request capability on cancellation or backgrounding.
 - Add behavioral lifecycle regressions, compiled-APK manifest/class gates and an Android framework harness using synthetic media. The harness does not validate Instagram account behavior.
-- Release validation is in progress; see the versioned publication report for completed evidence.
+- Signed APK produced with the original release certificate. 29 source/release tests, eight Android framework scenarios and 48 UI renders passed. Authenticated Instagram phone acceptance remains pending; see [the publication report](release/0.1.6-PUBLICATION.md).
 
 ## 0.1.5 — persistent local feed exclusions
 

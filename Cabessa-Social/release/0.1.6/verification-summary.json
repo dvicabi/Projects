@@ -1,0 +1,26 @@
+{
+  "release": "0.1.6",
+  "build_source_commit": "19e3135eca3d062e4d8cc96147411409c5762e3f",
+  "runtime_validation_commit": "e2f074af2833a01f1004277418081cafd95abb4c",
+  "ci_run_url": "https://github.com/dvicabi/Projects/actions/runs/45797367424",
+  "ci_conclusion": "success",
+  "runtime_artifact_id": 15106046511,
+  "runtime_artifact_archive_sha256": "4f3867efa3d159cdddef57c944eca46194ef2e015efee6b69d3941188831a514",
+  "apk_filename": "cabessa-social-0.1.6.apk",
+  "apk_bytes": 170884084,
+  "apk_sha256": "8853331a7899bd84eb3ad28e3b89379ee283f6706d34aa269055b45c8ece7752",
+  "signer_certificate_sha256": "8c0c5bde8ad2a9cc174b5385ae1a24734f95b07f4f6d751fcff2a82280066dc2",
+  "source_tests_passed": 18,
+  "release_gate_tests_passed": 11,
+  "android_framework_scenarios_passed": 8,
+  "normal_ui_renders_passed": 24,
+  "narrow_ui_renders_passed": 24,
+  "release_source_hashes_match_published_commit": 71,
+  "framework_production_java_hashes_match_release": 37,
+  "scope": "Android framework and synthetic caller; no Instagram account or real Story integration",
+  "test_doubles": [
+    "SingleReelSource allows only local file/loopback fixtures; production CDN gate excluded from this APK",
+    "Only nativeFetch/nativeCancel placeholder bridge bodies in SharedReelLoader are replaced; its lifecycle and request gate remain production code"
+  ],
+  "signed_apk_with_live_instagram_account_tested": false
+}

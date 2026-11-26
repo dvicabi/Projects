@@ -1,18 +1,23 @@
-# Single shared Reel player: implementation in 0.1.3
+# Single shared Reel player: implementation in 0.1.6
 
-## 0.1.4 source-only extension
+## Story and Direct entry points
 
-The organic Story CLIPS reshare sticker is routed to the same loader. See [Story share integration](STORY_SHARED_REEL.md) for the exact inspected route, new tests and pending build/device checks. The remainder of this document describes the last signed release, 0.1.3.
+The organic Story CLIPS reshare sticker and a selected Reel attachment in Direct
+use the same isolated player. See [Story share integration](STORY_SHARED_REEL.md)
+for the inspected native Story route and [the 0.1.6 report](../release/0.1.6-PUBLICATION.md)
+for completed validation and the remaining phone acceptance check.
 
 ## User flow
 
-Tap a Reel attachment in a direct or group conversation. A cancellable loading
-panel resolves that selected media through Instagram's existing authenticated
-transport. The result opens in a fullscreen, story-style local player. It is not
+Tap a shared Reel in a Story, direct conversation or group conversation. An
+opaque, non-exported `SingleReelActivity` opens immediately, before the selected
+media is resolved through Instagram's existing authenticated transport. Lookup
+and playback happen in this same Activity. The original screen must finish
+stopping before lookup or decoder preparation begins. The selected video is not
 uploaded, converted to a Story, or passed to Instagram's Reel pager.
 
 The player contains exactly one video source. It offers pause, play, replay,
-seeking within the selected video, and close/back to the same conversation.
+seeking within the selected video, and close/back to the original screen.
 Completion stops on that video. There is no next item, swipe navigation,
 recommendation adapter or autoplay queue. The display follows the grayscale
 preference. The isolated viewer currently has playback controls only; native
@@ -59,12 +64,37 @@ forwarding is introduced. Cross-domain redirects are disabled.
 
 ## Lifecycle and failure behavior
 
+The old fullscreen Dialog could leave the source Story Activity running. The
+new Activity uses the platform opaque `Theme.Material.NoActionBar`, in the same
+task and process. `SingleReelHandoff` watches the exact original Activity, then
+posts its completion after the stop callback so the source's remaining
+`onStop()`/fragment work has finished. Failure to observe a completed stop within
+five seconds fails closed. Audio focus is additional protection, not the source
+pause mechanism.
+
+The selected ID and native session stay in a private, one-use in-memory handoff;
+they are not serialized in an Intent or saved state. Leaving during lookup
+cancels the native request and revokes its capability. Reopening the attachment
+is required after this cancellation. Late responses cannot reopen the player.
+
 The player uses TextureView so its image participates in the existing grayscale
 view filter. It releases MediaPlayer, Surface, screen-on state and audio focus
-on close or host activity pause/stop/destroy. It stops at completion, pauses on
-audio-focus loss, and bounds media preparation to 30 seconds. Deleted, restricted,
-unsupported or unavailable media shows a local error and a route back to chat;
-it never opens the unrestricted native Reel viewer as a fallback.
+when covered, closed or stopped. After resolved-media playback is interrupted,
+it restores the playback position but requires an explicit Play tap. The actual
+Window focus is reconciled after recreation, including Android's case where a
+new focus-gained callback is not delivered. Playback requires the Activity to be
+resumed, focused and foreground, and the source to have stopped.
+
+It stops at completion, pauses on audio-focus loss, bounds media preparation to
+30 seconds and bounds seek completion to 10 seconds. Deleted, restricted,
+unsupported or unavailable media shows a local error and a route back; it never
+opens the unrestricted native Reel viewer as a fallback. In multi-window use,
+a source that remains started may produce the stop-timeout error rather than
+allow parallel playback.
+
+Controls use the shared light/dark palette, 48dp touch targets and the Activity
+context's layout direction. Video time and the seekbar remain left-to-right.
+Explicit system insets preserve the player's 16dp horizontal content margins.
 
 ## Validation and boundaries
 
@@ -72,14 +102,22 @@ Automated tests exercise actual Java policy/loader logic with native bridge and
 Android UI doubles. They cover exact media selection, CDN URL validation,
 cancellation, timeout, stale callbacks, synchronous completion, wrong/duplicate
 response items and activity changes. The APK build checks native fingerprints,
-compilation, required patches and signing. These checks are distinct from real
-playback with an authenticated account on a phone.
+compilation, required patches, final manifest/DEX classes and signing.
 
-Device acceptance still needs: open several fresh and previously opened DM
-Reels; try swipes in all directions; reach the end and replay; use Back; cancel
-while loading; background the app; receive a second selection; verify ordinary
-Stories/videos and grayscale. A different native DM entry point, future server
-response shape, DASH-only media or unusual CDN behavior may require maintenance.
+The [Android framework harness](../validation/android-smoke/README.md) also runs
+the production player and UI against a synthetic source Activity and actual
+MediaPlayer. It verifies source-stop ordering, decoded frames, controls,
+background release, restoration without autoplay, Back, error handling and
+pending lookup cancellation. It records the production source hashes and the
+exact native-bridge and media-source test replacements. These checks are
+distinct from real playback with an authenticated account on a phone.
+
+Phone acceptance still needs a real Story containing video/music and a shared
+Reel: confirm that both its audio and progress stop during lookup and playback,
+then that Back returns correctly to the Story. Also check the Direct entry
+point, backgrounding while loading/playing and the controls in the app's actual
+theme/language. A different native entry point or future server/media response
+shape may require maintenance.
 
 Android references: [MediaPlayer](https://developer.android.com/reference/android/media/MediaPlayer),
 [state and resource lifecycle](https://developer.android.com/media/platform/mediaplayer/state-resources),
