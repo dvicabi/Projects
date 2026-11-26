@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.LocaleList;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -14,6 +15,7 @@ import java.util.Locale;
 /** Screenshots render the real production widgets; the surrounding shell is a test fixture. */
 public final class SmokeUiActivity extends Activity {
     static Locale locale = Locale.ENGLISH;
+    static Locale processLocale = Locale.ENGLISH;
     static boolean dark;
     static float fontScale = 1f;
 
@@ -31,6 +33,11 @@ public final class SmokeUiActivity extends Activity {
         setTheme(dark ? android.R.style.Theme_Material_NoActionBar
                 : android.R.style.Theme_Material_Light_NoActionBar);
         super.onCreate(state);
+        // Android applies its process configuration while launching an Activity.
+        // Establish this fixture's requested process default after that step and
+        // before constructing any production widget; the runner asserts it later.
+        LocaleList.setDefault(new LocaleList(processLocale));
+        Locale.setDefault(processLocale);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setLayoutDirection(getResources().getConfiguration().getLayoutDirection());

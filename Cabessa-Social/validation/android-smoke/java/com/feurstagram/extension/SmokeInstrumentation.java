@@ -205,8 +205,7 @@ public final class SmokeInstrumentation extends Instrumentation {
             for (boolean dark : new boolean[]{false, true}) {
                 for (String scene : new String[]{"inbox", "profile", "settings", "feed"}) {
                     main(() -> {
-                        LocaleList.setDefault(new LocaleList(processLocale));
-                        Locale.setDefault(processLocale);
+                        SmokeUiActivity.processLocale = processLocale;
                         SmokeUiActivity.locale = new Locale(language);
                         SmokeUiActivity.dark = dark;
                         SmokeUiActivity.fontScale = large ? 1.3f : 1f;
@@ -219,7 +218,8 @@ public final class SmokeInstrumentation extends Instrumentation {
                     require(main(() -> CabessaUi.colors(ui).dark == dark), "Test shell theme differs from requested palette");
                     main(() -> {
                         require(Locale.getDefault().getLanguage().equals(processLocale.getLanguage()),
-                                "Test process locale differs from requested locale scenario");
+                                "Test process locale differs from requested locale scenario: "
+                                        + Locale.getDefault().toLanguageTag() + " != " + processLocale.toLanguageTag());
                         int expected = "he".equals(language) ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR;
                         ViewGroup content = (ViewGroup) ui.findViewById(android.R.id.content);
                         ViewGroup root = (ViewGroup) content.getChildAt(0);
