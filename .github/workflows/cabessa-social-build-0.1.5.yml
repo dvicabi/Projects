@@ -19,6 +19,8 @@ jobs:
         working-directory: Cabessa-Social
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Select JDK 21 and rerun source gates
         run: |
           set -euo pipefail
@@ -32,7 +34,25 @@ jobs:
       - name: Install Android SDK and verified compiler dependencies
         run: |
           set -euo pipefail
-          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+          export ANDROID_HOME="${ANDROID_HOME:-$RUNNER_TEMP/android-sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          mkdir -p "$ANDROID_HOME"
+          sdkmanager="$(command -v sdkmanager || true)"
+          if test -z "$sdkmanager"; then
+            sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+            if ! test -x "$sdkmanager"; then
+              mkdir -p "$ANDROID_HOME/cmdline-tools" "$RUNNER_TEMP/cabessa-sdk-unpack"
+              curl --fail --location --retry 2 --connect-timeout 20 --max-time 480 --output "$RUNNER_TEMP/cabessa-cmdtools.zip" 'https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip'
+              unzip -q "$RUNNER_TEMP/cabessa-cmdtools.zip" -d "$RUNNER_TEMP/cabessa-sdk-unpack"
+              mv "$RUNNER_TEMP/cabessa-sdk-unpack/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+            fi
+          fi
+          set +o pipefail
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+          set -o pipefail
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" --install 'platforms;android-35' 'build-tools;35.0.0'
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
           mkdir -p tools
           python3 - <<'PY'
           import hashlib, json, pathlib, subprocess
