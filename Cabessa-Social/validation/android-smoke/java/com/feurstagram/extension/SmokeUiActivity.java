@@ -33,7 +33,7 @@ public final class SmokeUiActivity extends Activity {
         super.onCreate(state);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setLayoutDirection(View.LAYOUT_DIRECTION_LOCALE);
+        root.setLayoutDirection(getResources().getConfiguration().getLayoutDirection());
         root.setBackgroundColor(dark ? Color.BLACK : Color.WHITE);
         root.setPadding(0, 90, 0, 50);
         TextView label = new TextView(this);

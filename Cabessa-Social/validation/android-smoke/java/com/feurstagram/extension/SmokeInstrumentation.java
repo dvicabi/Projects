@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.LocaleList;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.View;
@@ -192,10 +193,20 @@ public final class SmokeInstrumentation extends Instrumentation {
 
     private void renderUi() throws Exception {
         boolean large = "true".equals(options.getString("largeFont"));
-        for (String language : new String[]{"en", "he"}) {
+        Locale savedLocale = Locale.getDefault();
+        LocaleList savedLocales = LocaleList.getDefault();
+        try {
+        // "he" deliberately keeps an English process default while the Activity
+        // context is Hebrew, as with a per-app language selection. "he-system"
+        // additionally proves the matching Hebrew process/context configuration.
+        for (String variant : new String[]{"en", "he", "he-system"}) {
+            String language = variant.startsWith("he") ? "he" : "en";
+            Locale processLocale = "he-system".equals(variant) ? new Locale("he") : Locale.ENGLISH;
             for (boolean dark : new boolean[]{false, true}) {
                 for (String scene : new String[]{"inbox", "profile", "settings", "feed"}) {
                     main(() -> {
+                        LocaleList.setDefault(new LocaleList(processLocale));
+                        Locale.setDefault(processLocale);
                         SmokeUiActivity.locale = new Locale(language);
                         SmokeUiActivity.dark = dark;
                         SmokeUiActivity.fontScale = large ? 1.3f : 1f;
@@ -207,6 +218,8 @@ public final class SmokeInstrumentation extends Instrumentation {
                     SystemClock.sleep(450);
                     require(main(() -> CabessaUi.colors(ui).dark == dark), "Test shell theme differs from requested palette");
                     main(() -> {
+                        require(Locale.getDefault().getLanguage().equals(processLocale.getLanguage()),
+                                "Test process locale differs from requested locale scenario");
                         int expected = "he".equals(language) ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR;
                         ViewGroup content = (ViewGroup) ui.findViewById(android.R.id.content);
                         ViewGroup root = (ViewGroup) content.getChildAt(0);
@@ -228,7 +241,7 @@ public final class SmokeInstrumentation extends Instrumentation {
                     });
                     if ("inbox".equals(scene)) main(() -> { checkTargets(ui.getWindow().getDecorView()); return null; });
                     checkAccessibleTargets(ui.getResources().getDisplayMetrics().density);
-                    screenshot(scene + "-" + language + "-" + (dark ? "dark" : "light"));
+                    screenshot(scene + "-" + variant + "-" + (dark ? "dark" : "light"));
                     if ("settings".equals(scene) || "feed".equals(scene)) {
                         sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
                         waitForIdleSync();
@@ -237,6 +250,13 @@ public final class SmokeInstrumentation extends Instrumentation {
                     waitForIdleSync();
                 }
             }
+        }
+        } finally {
+            main(() -> {
+                LocaleList.setDefault(savedLocales);
+                Locale.setDefault(savedLocale);
+                return null;
+            });
         }
     }
 
@@ -254,9 +274,20 @@ public final class SmokeInstrumentation extends Instrumentation {
     }
 
     private void checkAccessibleTargets(float density) {
-        AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
+        android.app.UiAutomation automation = getUiAutomation();
+        AccessibilityNodeInfo root = null;
+        long deadline = SystemClock.uptimeMillis() + scaled(3000);
+        while (SystemClock.uptimeMillis() < deadline) {
+            root = automation.getRootInActiveWindow();
+            if (root != null && getTargetContext().getPackageName().equals(String.valueOf(root.getPackageName()))) break;
+            if (root != null) root.recycle();
+            root = null;
+            SystemClock.sleep(50);
+        }
         require(root != null, "No active accessibility hierarchy for actual UI render");
-        require(checkAccessibleNode(root, Math.round(48 * density)) > 0, "Requested UI did not expose any button or switch");
+        try {
+            require(checkAccessibleNode(root, Math.round(48 * density)) > 0, "Requested UI did not expose any button or switch");
+        } finally { root.recycle(); }
     }
 
     private int checkAccessibleNode(AccessibilityNodeInfo node, int minimum) {

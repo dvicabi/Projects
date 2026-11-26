@@ -59,8 +59,14 @@ and hidden-account pages in Hebrew and English, light and dark themes. A second 
 320dp display width with 130% font scale. The harness application sets
 `supportsRtl=true`, matching the release. Actual view direction is asserted for
 the Hebrew/English shell, inbox controls, profile control and settings page.
+The `he` render deliberately uses a Hebrew Activity context with an English
+process default, exercising per-app language selection. Additional `he-system`
+renders use Hebrew for both. The process locale is restored after rendering.
 Button/switch accessibility targets and inbox ellipsis are checked
-programmatically; screenshots still require visual review.
+programmatically; screenshots still require visual review. The active accessibility
+root is polled for up to 3 seconds (scaled only by the documented timeout option)
+to allow UiAutomation to connect after a display-density change; a missing or
+different-app hierarchy still fails the check.
 
 ## Scope and test double
 

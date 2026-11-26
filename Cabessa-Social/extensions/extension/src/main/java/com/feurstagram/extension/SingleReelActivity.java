@@ -117,6 +117,7 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
     private void createContent() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
+        root.setLayoutDirection(getResources().getConfiguration().getLayoutDirection());
         root.setBackgroundColor(Color.BLACK);
         root.setFitsSystemWindows(false);
         root.setPadding(dp(16), dp(4), dp(16), dp(12));
@@ -148,6 +149,9 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
         root.addView(frame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
         progress = new SeekBar(this);
+        // Media time advances left-to-right even when the surrounding controls
+        // follow a Hebrew per-app locale.
+        progress.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
         progress.setMax(1000);
         progress.setEnabled(false);
         progress.setThumbTintList(ColorStateList.valueOf(Color.WHITE));
@@ -218,6 +222,10 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
     @Override protected void onResume() {
         super.onResume();
         state.resume();
+        // Activity recreation may preserve an already-focused Window without
+        // delivering another onWindowFocusChanged(true) to this new instance.
+        // Reconcile the real Window state; this never requests autoplay.
+        state.windowFocus(hasWindowFocus());
         prepareIfPossible();
         maybeStart();
     }
@@ -268,7 +276,10 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
         super.onSaveInstanceState(saved);
     }
 
-    @Override public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) { prepareIfPossible(); }
+    @Override public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+        state.windowFocus(hasWindowFocus());
+        prepareIfPossible();
+    }
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) { fitVideo(); }
     @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
         rememberPosition();
@@ -357,7 +368,7 @@ public final class SingleReelActivity extends Activity implements TextureView.Su
     }
 
     private void maybeStart() {
-        if (!state.canStart() || restoringPosition || player == null || isFinishing()) return;
+        if (!state.canStart() || !hasWindowFocus() || restoringPosition || player == null || isFinishing()) return;
         if (!focusHeld) {
             try { focusHeld = audio != null && audio.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED; }
             catch (RuntimeException ignored) { focusHeld = false; }

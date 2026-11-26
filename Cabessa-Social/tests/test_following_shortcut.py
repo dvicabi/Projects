@@ -18,13 +18,13 @@ public class Context { private final android.content.res.Resources resources=new
 public class Resources { private final Configuration config=new Configuration();public Configuration getConfiguration() { return config; } public Metrics getDisplayMetrics() { return new Metrics(); }
 public static class Metrics { public float density = 1; } }''',
 'android/content/res/Configuration.java': '''package android.content.res;
-public class Configuration { public float fontScale=1;public java.util.List<java.util.Locale> getLocales() { return java.util.Collections.singletonList(java.util.Locale.getDefault()); } }''',
+public class Configuration { public float fontScale=1;public java.util.Locale locale=java.util.Locale.getDefault();public java.util.List<java.util.Locale> getLocales() { return java.util.Collections.singletonList(locale); } public int getLayoutDirection(){return locale.getLanguage().equals("he")?1:0;} }''',
 'android/view/Gravity.java': 'package android.view;public class Gravity {public static final int CENTER_VERTICAL=16;}',
 'android/view/ViewParent.java': 'package android.view; public interface ViewParent {}',
 'android/view/View.java': '''package android.view;
-public class View { public static final int LAYOUT_DIRECTION_LOCALE=3;public String name,description; public boolean shown=true, enabled=true; public int clicks; ViewParent parent;public ViewGroup.LayoutParams params; public interface OnClickListener {void onClick(View v);} OnClickListener listener;
+public class View { public static final int LAYOUT_DIRECTION_LTR=0,LAYOUT_DIRECTION_RTL=1,LAYOUT_DIRECTION_LOCALE=3;private int layoutDirection;public String name,description; public boolean shown=true, enabled=true; public int clicks; ViewParent parent;public ViewGroup.LayoutParams params; public interface OnClickListener {void onClick(View v);} OnClickListener listener;
 protected final android.content.Context context; public View(android.content.Context c){context=c;}
-public android.content.Context getContext(){return context;}public void setLayoutDirection(int d){} public void setContentDescription(String s){description=s;}
+public android.content.Context getContext(){return context;}public void setLayoutDirection(int d){layoutDirection=d;}public int getLayoutDirection(){return layoutDirection==LAYOUT_DIRECTION_LOCALE?(java.util.Locale.getDefault().getLanguage().equals("he")?1:0):layoutDirection;} public void setContentDescription(String s){description=s;}
 public void setLayoutParams(ViewGroup.LayoutParams p){params=p;}public void setPadding(int a,int b,int c,int d){}
 public static class MeasureSpec {public static int getSize(int s){return s;}}protected void onMeasure(int w,int h){}public void measure(int w,int h){onMeasure(w,h);}
 public android.content.res.Resources getResources(){return context.getResources();}
@@ -56,18 +56,18 @@ import android.content.Context;import android.view.*;import android.widget.*;
 public class FollowingHarness {
 static void check(boolean result){if(!result)throw new AssertionError();}
 public static void main(String[] args){
- Context c=new Context();java.util.Locale.setDefault(java.util.Locale.forLanguageTag("he"));
- StoriesTrayRow.Host first=new StoriesTrayRow.Host(c);check(first.getChildCount()==1);LinearLayout panel=(LinearLayout)first.getChildAt(0);LinearLayout actions=(LinearLayout)panel.getChildAt(0);Button shortcut=(Button)actions.getChildAt(0);check(shortcut.text.equals("פרסומים מהחברים"));check(((TextView)panel.getChildAt(1)).text.equals("מהחדש לישן"));check(shortcut.description.contains("מהחדש לישן"));
+ java.util.Locale.setDefault(java.util.Locale.ENGLISH);Context c=new Context();c.getResources().getConfiguration().locale=java.util.Locale.forLanguageTag("he");
+ StoriesTrayRow.Host first=new StoriesTrayRow.Host(c);check(first.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL);check(java.util.Locale.getDefault().equals(java.util.Locale.ENGLISH));check(first.getChildCount()==1);LinearLayout panel=(LinearLayout)first.getChildAt(0);LinearLayout actions=(LinearLayout)panel.getChildAt(0);Button shortcut=(Button)actions.getChildAt(0);check(shortcut.text.equals("פרסומים מהחברים"));check(((TextView)panel.getChildAt(1)).text.equals("מהחדש לישן"));check(shortcut.description.contains("מהחדש לישן"));
  first.measure(320,800);check(actions.getOrientation()==LinearLayout.VERTICAL&&shortcut.params.width==-1);first.measure(360,800);check(actions.getOrientation()==LinearLayout.HORIZONTAL&&shortcut.params.width==0);c.getResources().getConfiguration().fontScale=1.4f;first.measure(500,800);check(actions.getOrientation()==LinearLayout.VERTICAL);c.getResources().getConfiguration().fontScale=1f;
  View tray=new View(c);first.attachTray(tray);first.attachTray(tray);check(first.getChildCount()==2&&first.getChildAt(0)==tray&&first.getChildAt(1)==panel); ((Button)actions.getChildAt(1)).performClick();check(FeedMuteSettings.opens==1);
  StoriesTrayRow.Host second=new StoriesTrayRow.Host(c);second.attachTray(tray);check(first.getChildCount()==1&&second.getChildAt(0)==tray);
  View replacement=new View(c);second.attachTray(replacement);check(second.getChildCount()==2&&tray.getParent()==null&&second.getChildAt(0)==replacement);
- java.util.Locale.setDefault(java.util.Locale.ENGLISH);StoriesTrayRow.Host english=new StoriesTrayRow.Host(c);LinearLayout englishPanel=(LinearLayout)english.getChildAt(0);check(((Button)((LinearLayout)englishPanel.getChildAt(0)).getChildAt(0)).text.equals("Friends' posts"));check(((TextView)englishPanel.getChildAt(1)).text.equals("Newest first"));
+ StoriesTrayRow.Host english=new StoriesTrayRow.Host(new Context());check(english.getLayoutDirection()==View.LAYOUT_DIRECTION_LTR);LinearLayout englishPanel=(LinearLayout)english.getChildAt(0);check(((Button)((LinearLayout)englishPanel.getChildAt(0)).getChildAt(0)).text.equals("Friends' posts"));check(((TextView)englishPanel.getChildAt(1)).text.equals("Newest first"));
  ViewGroup bar=new ViewGroup(c);View wrong=new View(c);wrong.name="clips_tab";wrong.setOnClickListener(v->{});bar.addView(wrong,new ViewGroup.LayoutParams(1,1));View right=new View(c);right.name="feed_tab";right.setOnClickListener(v->{});bar.addView(right,new ViewGroup.LayoutParams(1,1));Hiders.bar=bar;
  shortcut.performClick();check(right.clicks==1&&wrong.clicks==0&&Toast.shown==0);
  right.enabled=false;shortcut.performClick();check(right.clicks==1&&Toast.shown==1);
  Hiders.bar=null;shortcut.performClick();check(Toast.shown==2);
- System.out.println("Shortcut: Hebrew/English, adaptive width/font layout, tray recycling, native tab routing, missing or disabled feed: OK");
+ System.out.println("Shortcut: Hebrew context/English process RTL, English LTR, adaptive width/font layout, tray recycling, native tab routing, missing or disabled feed: OK");
 }
 }''',
 }

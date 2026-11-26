@@ -365,7 +365,7 @@ public final class Settings {
     public static Page newPage(Context context) {
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setLayoutDirection(View.LAYOUT_DIRECTION_LOCALE);
+        root.setLayoutDirection(context.getResources().getConfiguration().getLayoutDirection());
         root.setBackgroundColor(CabessaUi.colors(context).background);
         applyPageInsets(root, 16, 8, CONTENT_MAX_WIDTH_DP);
 

@@ -68,7 +68,7 @@ public final class StoriesTrayRow {
         Host(Context context) {
             super(context);
             setOrientation(VERTICAL);
-            setLayoutDirection(View.LAYOUT_DIRECTION_LOCALE);
+            setLayoutDirection(context.getResources().getConfiguration().getLayoutDirection());
             Locale locale = context.getResources().getConfiguration().getLocales().get(0);
             if (locale == null) locale = Locale.getDefault();
             boolean hebrew = locale != null && ("he".equals(locale.getLanguage())
